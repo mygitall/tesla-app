@@ -194,7 +194,8 @@ struct HomeView: View {
     private var actionRow: some View {
         HStack(spacing: 10) {
             actionButton(title: (s?.locked ?? true) ? "解锁" : "上锁",
-                         icon: (s?.locked ?? true) ? "lock.open" : "lock") {
+                         icon: (s?.locked ?? true) ? "lock.open" : "lock",
+                         active: s?.locked == false) {
                 let locked = s?.locked ?? true
                 Task { await api.command(locked ? "unlock" : "lock", label: locked ? "解锁" : "上锁") }
             }
