@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var pendingLock: Bool?
     /// 定位失败提示
     @State private var posAlert: String?
+    /// 顶部操作提示（执行中 / 成功 / 失败）
+    @State private var toast: ToastInfo?
 
     private var s: VehicleSummary? { api.summary }
 
@@ -43,6 +45,7 @@ struct HomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            .overlay(alignment: .top) { toastBanner }
         }
         .navigationViewStyle(.stack)
         .refreshable { await api.refresh() }
@@ -52,6 +55,16 @@ struct HomeView: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase != .active { ble.goBackground() }
+        }
+        .onChange(of: api.busy) { busy in
+            if busy {
+                showToast(api.actionText ?? "执行中…", loading: true)
+            } else if let t = api.actionText, !t.isEmpty {
+                showToast(t, error: api.actionIsError)
+            }
+        }
+        .onChange(of: api.errorText) { err in
+            if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true) }
         }
         .sheet(isPresented: $showSettings) { SettingsSheet(api: api) }
         .sheet(isPresented: $showBleLog) { BleLogSheet(ble: ble) }
@@ -390,6 +403,57 @@ struct HomeView: View {
         return String(format: "%d:%02d", m / 60, m % 60)
     }
 
+    // MARK: 顶部提示条
+
+    private var toastBanner: some View {
+        Group {
+            if let t = toast {
+                HStack(spacing: 8) {
+                    if t.loading {
+                        ProgressView().scaleEffect(0.7).tint(L.sand)
+                    } else {
+                        Image(systemName: t.isError ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(t.isError ? Color(hex: 0xE5484D) : L.ringGreen)
+                    }
+                    Text(t.text)
+                        .font(.system(size: 11.5))
+                        .foregroundColor(L.text)
+                        .lineLimit(2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(L.card2)
+                        .shadow(color: .black.opacity(0.35), radius: 12, y: 4)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(t.isError ? Color(hex: 0xE5484D).opacity(0.35) : L.line, lineWidth: 1)
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 54)          // 避开状态栏/刘海
+                .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { toast = nil } }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+
+    private func showToast(_ text: String, error: Bool = false, loading: Bool = false) {
+        withAnimation(.easeOut(duration: 0.18)) {
+            toast = ToastInfo(text: text, isError: error, loading: loading)
+        }
+        guard !loading else { return }
+        let delay: Double = error ? 4.5 : 2.2
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            if toast?.text == text {
+                withAnimation(.easeOut(duration: 0.2)) { toast = nil }
+            }
+        }
+    }
+
     private func openCarInMaps() {
         guard let lat = s?.lat, let lon = s?.lon else {
             posAlert = "车辆位置暂不可用（车可能在睡眠或没有信号）"
@@ -455,4 +519,11 @@ struct BleLogSheet: View {
 // 让 String 能直接用于 .alert(item:)
 extension String: Identifiable {
     public var id: String { self }
+}
+
+
+struct ToastInfo: Equatable {
+    var text: String
+    var isError: Bool
+    var loading: Bool
 }
