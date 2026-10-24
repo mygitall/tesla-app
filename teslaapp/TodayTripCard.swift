@@ -1,59 +1,64 @@
 import SwiftUI
 
 /// 首页「今日行程」卡片
-/// 默认红色背景（可改 background 参数换回卡片色 L.card）
 struct TodayTripCard: View {
     let distanceKm: Double
     let durationText: String      // 形如 "1:15"
     let energyKwh: Double
 
-    var background: Color = L.red
-    var titleColor: Color = .white.opacity(0.92)
-    var valueColor: Color = .white
-    var unitColor: Color = .white.opacity(0.72)
-    var dividerColor: Color = .white.opacity(0.22)
+    var background: Color = L.card
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 13) {
+            // 标题行
             HStack {
                 Text("今日行程")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(titleColor)
+                    .foregroundColor(L.sub)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(titleColor.opacity(0.6))
+                    .foregroundColor(L.dim)
             }
+
+            // 三栏数据
             HStack(spacing: 0) {
-                metric(String(format: "%.1f", distanceKm), "km")
+                cell(String(format: "%.1f", distanceKm), "km", leading: 0)
                 divider
-                metric(durationText, "小时")
+                cell(durationText, "小时", leading: 14)
                 divider
-                metric(String(format: "%.0f", energyKwh), "kWh")
+                cell(String(format: "%.0f", energyKwh), "kWh", leading: 14)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 15)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(background)
         )
     }
 
-    private func metric(_ v: String, _ unit: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(v)
-                .font(.system(size: 23, weight: .regular))
+    /// 数值 + 单位同行，基线对齐
+    private func cell(_ value: String, _ unit: String, leading: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 3) {
+            Text(value)
+                .font(.system(size: 22, weight: .medium))
                 .monospacedDigit()
-                .foregroundColor(valueColor)
+                .foregroundColor(L.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(unit)
-                .font(.system(size: 11))
-                .foregroundColor(unitColor)
+                .font(.system(size: 10.5))
+                .foregroundColor(L.sub)
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, leading)
     }
 
     private var divider: some View {
-        Rectangle().fill(dividerColor).frame(width: 1, height: 34)
+        Rectangle()
+            .fill(L.line)
+            .frame(width: 1, height: 24)
     }
 }
