@@ -100,7 +100,7 @@ struct HomeView: View {
         Group {
             if let ui = UIImage(named: "car") {
                 Image(uiImage: ui).resizable().scaledToFit()
-                    .frame(maxHeight: 170)
+                    .frame(maxHeight: 113)
             } else {
                 VStack(spacing: 6) {
                     Image(systemName: "car.side.fill")
@@ -112,7 +112,7 @@ struct HomeView: View {
                     Text("把车辆图片命名为 car.png 放进 Assets 可替换")
                         .font(.system(size: 9)).foregroundColor(L.sub)
                 }
-                .frame(height: 150)
+                .frame(height: 100)
             }
         }
         .frame(maxWidth: .infinity)
