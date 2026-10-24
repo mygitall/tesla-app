@@ -121,39 +121,49 @@ struct HomeView: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: 电量卡
+    // MARK: 电量卡（绿色光环 + 居中数字）
 
     private var batteryCard: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(s?.battery ?? 0)")
-                    .font(.system(size: 46, weight: .light))
-                    .monospacedDigit()
-                    .foregroundColor(L.text)
-                Text("%")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundColor(L.sub)
+        VStack(spacing: 0) {
+            ZStack {
+                // 底环
+                Circle()
+                    .stroke(Color.white.opacity(0.06), lineWidth: 12)
+                // 进度环（长度 = 电量百分比）
+                Circle()
+                    .trim(from: 0, to: batteryRatio)
+                    .stroke(
+                        L.ringGreen,
+                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.6), value: batteryRatio)
+
+                // 环内内容
+                VStack(spacing: 5) {
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
+                        Text("\(s?.battery ?? 0)")
+                            .font(.system(size: 50, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundColor(L.text)
+                        Text("%")
+                            .font(.system(size: 18, weight: .regular))
+                            .foregroundColor(L.sub)
+                    }
+                    Text("续航 \(s?.rangeKm ?? 0) km")
+                        .font(.system(size: 11))
+                        .foregroundColor(L.sub)
+                }
             }
-            Text("续航 \(s?.rangeKm ?? 0) km")
-                .font(.system(size: 12))
-                .foregroundColor(L.sub)
-            progressBar.padding(.top, 5)
+            .frame(width: 172, height: 172)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
     }
 
-    private var progressBar: some View {
-        GeometryReader { geo in
-            let pct = min(max(Double(s?.battery ?? 0) / 100, 0), 1)
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.06))
-                Capsule().fill(L.sand).frame(width: geo.size.width * pct)
-            }
-        }
-        .frame(height: 3)
+    private var batteryRatio: Double {
+        min(max(Double(s?.battery ?? 0) / 100, 0), 1)
     }
 
     // MARK: 今日卡
