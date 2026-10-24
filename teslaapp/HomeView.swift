@@ -121,45 +121,54 @@ struct HomeView: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: 电量卡（绿色光环 + 居中数字）
+    // MARK: 电量卡（光环 + 续航 + 进度条，高度不变）
 
     private var batteryCard: some View {
-        VStack(spacing: 0) {
+        HStack(spacing: 14) {
+            // 电量光环
             ZStack {
-                // 底环
                 Circle()
-                    .stroke(Color.white.opacity(0.06), lineWidth: 12)
-                // 进度环（长度 = 电量百分比）
+                    .stroke(Color.white.opacity(0.07), lineWidth: 6)
                 Circle()
                     .trim(from: 0, to: batteryRatio)
-                    .stroke(
-                        L.ringGreen,
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                    )
+                    .stroke(L.ringGreen, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.easeOut(duration: 0.6), value: batteryRatio)
 
-                // 环内内容
-                VStack(spacing: 5) {
-                    HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text("\(s?.battery ?? 0)")
-                            .font(.system(size: 50, weight: .medium))
-                            .monospacedDigit()
-                            .foregroundColor(L.text)
-                        Text("%")
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundColor(L.sub)
-                    }
-                    Text("续航 \(s?.rangeKm ?? 0) km")
-                        .font(.system(size: 11))
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(s?.battery ?? 0)")
+                        .font(.system(size: 36, weight: .medium))
+                        .monospacedDigit()
+                        .foregroundColor(L.text)
+                    Text("%")
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(L.sub)
                 }
             }
-            .frame(width: 172, height: 172)
+            .frame(width: 84, height: 84)
+
+            // 续航 + 进度条
+            VStack(alignment: .leading, spacing: 9) {
+                Text("续航 \(s?.rangeKm ?? 0) km")
+                    .font(.system(size: 12))
+                    .foregroundColor(L.sub)
+                progressBar
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 4)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+    }
+
+    private var progressBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.07))
+                Capsule().fill(L.ringGreen).frame(width: geo.size.width * batteryRatio)
+            }
+        }
+        .frame(height: 3)
     }
 
     private var batteryRatio: Double {
