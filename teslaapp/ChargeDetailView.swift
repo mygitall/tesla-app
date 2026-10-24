@@ -15,6 +15,9 @@ struct ChargeDetailView: View {
     @State private var baseKw = "60"
     @State private var curve: [ChargeCurvePoint] = []
     @State private var curveLoading = true
+    @State private var curveStart: Int?
+    @State private var shareItems: [Any] = []
+    @State private var showShare = false
     @State private var year: Int = Calendar.current.component(.year, from: Date())
 
     private var s: VehicleSummary? { api.summary }
@@ -30,7 +33,15 @@ struct ChargeDetailView: View {
                     periodPicker
                     heroCard
                     paramGrid
-                    ChargeCurveView(points: curve, peak: api.chargeCurvePeak)
+                    ChargeCurveView(
+                        points: curve,
+                        sessions: api.chargeSummary?.sessions ?? [],
+                        selectedStart: curveStart,
+                        onSelectSession: { start in
+                            Task { await loadCurve(sessionStart: start) }
+                        },
+                        onExport: { exportCurve() }
+                    )
                     totalsCard
                     sessionListCard
                     sourceNote
@@ -59,13 +70,17 @@ struct ChargeDetailView: View {
                 .foregroundColor(L.text)
             }
         }
+        .sheet(isPresented: $showShare) {
+            ShareSheet(items: shareItems)
+        }
         .sheet(isPresented: $showBaselineEditor) {
             baselineEditor
         }
         .task {
-            curve = await api.loadChargeCurve()
-            curveLoading = false
             await api.loadChargeMonths()
+            await reload()
+            await loadCurve(sessionStart: nil)
+            curveLoading = false
             if allTime {
                 await api.loadChargeSummaryAll()
             } else {
@@ -414,6 +429,42 @@ struct ChargeDetailView: View {
     }
 
     // MARK: 数据
+
+    /// 加载某次充电的曲线；start 为 nil 时取最近一次
+    private func loadCurve(sessionStart: Int?) async {
+        curveStart = sessionStart
+        if let st = sessionStart,
+           let s = (api.chargeSummary?.sessions ?? []).first(where: { $0.startTs == st }) {
+            curve = await api.loadChargeCurve(start: s.startTs - 300, end: s.endTs + 300)
+        } else {
+            curve = await api.loadChargeCurve()
+            curveStart = api.chargeSummary?.sessions.last?.startTs
+        }
+    }
+
+    /// 导出 CSV
+    private func exportCurve() {
+        guard !curve.isEmpty else { return }
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        var csv = "\u{FEFF}时间,电量(%),功率(kW),电压(V),电流(A)\n"
+        for p in curve {
+            let t = df.string(from: Date(timeIntervalSince1970: TimeInterval(p.ts)))
+            let b = p.battery.map(String.init) ?? ""
+            let v = p.voltage.map { String(format: "%.1f", $0) } ?? ""
+            let c = p.current.map { String(format: "%.1f", $0) } ?? ""
+            csv += "\(t),\(b),\(String(format: "%.2f", p.power)),\(v),\(c)\n"
+        }
+
+        let name = curveStart.map { df.string(from: Date(timeIntervalSince1970: TimeInterval($0))) } ?? "latest"
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("充电曲线-\(name.replacingOccurrences(of: ":", with: "-")).csv")
+        try? csv.write(to: url, atomically: true, encoding: .utf8)
+
+        shareItems = [url]
+        showShare = true
+    }
 
     private func reload() async {
         if allTime {
