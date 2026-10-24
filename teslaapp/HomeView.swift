@@ -8,8 +8,13 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showSettings = false
     @State private var showBleLog = false
+    /// 乐观锁状态：点下去立刻切换视觉，等服务器确认后清空
+    @State private var pendingLock: Bool?
 
     private var s: VehicleSummary? { api.summary }
+
+    /// 优先用本地乐观状态，避免等网络
+    private var isLocked: Bool { pendingLock ?? (s?.locked ?? true) }
     private var isCharging: Bool { (s?.charging ?? "").lowercased() == "charging" }
 
     // 实测色板
@@ -210,16 +215,25 @@ struct HomeView: View {
         }
     }
 
-    /// 锁按钮：图标/文字反映「当前状态」，点击切换
+    /// 锁按钮：图标/文字反映「当前状态」，点击立刻切换（乐观更新）
     private var lockButton: some View {
-        let unlocked = (s?.locked == false)          // 当前是否解锁
+        let unlocked = !isLocked
         return Button {
+            guard !api.busy else { return }     // 正在执行就不响应，避免状态错乱
+            let target = isLocked               // 目标是「锁上」
+            // ① 立刻翻转视觉
+            withAnimation(.easeOut(duration: 0.12)) { pendingLock = target }
             Task {
-                if unlocked {
-                    await api.command("lock", label: "上锁")
-                } else {
-                    await api.command("unlock", label: "解锁")
+                await api.command(target ? "lock" : "unlock", label: target ? "上锁" : "解锁")
+                // ② 失败 → 立刻回滚
+                if api.actionIsError {
+                    withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
+                    return
                 }
+                // ③ 成功 → 刷新真实状态后交回服务器
+                await api.refresh()
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
             }
         } label: {
             VStack(spacing: 9) {
