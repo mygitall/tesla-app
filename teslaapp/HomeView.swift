@@ -37,7 +37,7 @@ struct HomeView: View {
                         Color.clear.frame(height: 96)
                     }
                     .padding(.horizontal, hPad)
-                    .padding(.top, 30)
+                    .padding(.top, 50)
                 }
             }
             .navigationBarHidden(true)
