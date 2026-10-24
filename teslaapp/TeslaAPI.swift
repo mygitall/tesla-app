@@ -67,6 +67,21 @@ struct ChargeSummaryResp: Codable {
     var sessions: [ChargeSessionItem]
 }
 
+struct ChargeCurvePoint: Codable, Identifiable {
+    var ts: Int
+    var battery: Int?
+    var power: Double
+    var voltage: Double?
+    var current: Double?
+    var id: Int { ts }
+}
+
+struct ChargeCurveResp: Codable {
+    var points: [ChargeCurvePoint]
+    var peakPower: Double?
+    var count: Int?
+}
+
 struct ChargeMonthsResp: Codable {
     var months: [ChargeMonth]
     var totalSessions: Int
@@ -254,6 +269,7 @@ final class TeslaAPI: ObservableObject {
     @Published var chargeLoading = false
     @Published var trips: [Trip] = []
     @Published var tripsTotals: TripsTotals?
+    @Published var chargeCurvePeak: Double = 0
     @Published var tripsLoading = false
     @Published var actionIsError = false
     @Published var busy = false
@@ -569,6 +585,22 @@ final class TeslaAPI: ObservableObject {
         } catch {
             return []
         }
+    }
+
+    /// 充电曲线（不传时间则取最近一次充电）
+    func loadChargeCurve(start: Int? = nil, end: Int? = nil) async -> [ChargeCurvePoint] {
+        var path = "/api/charge/curve"
+        if let start, let end { path += "?start=\(start)&end=\(end)" }
+        var req = URLRequest(url: url(path))
+        req.httpMethod = "GET"
+        req.timeoutInterval = 25
+        do {
+            let (data, resp) = try await session.data(for: req)
+            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+            let r = try JSONDecoder().decode(ChargeCurveResp.self, from: data)
+            chargeCurvePeak = r.peakPower ?? 0
+            return r.points
+        } catch { return [] }
     }
 
     /// 充电月份列表

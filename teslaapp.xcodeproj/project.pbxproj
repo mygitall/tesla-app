@@ -16,6 +16,7 @@
 		40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */; };
 		4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */; };
 		4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */; };
+		69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */; };
 		A72866047347672E1E12F189B431CDB6 /* teslaappApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF828282C6FC64F66C139AEF5168BBD /* teslaappApp.swift */; };
 		A78ED4EFBCA5B7FBCD8AA5964614BBC9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */; };
 		B1B555390BE02FBA3783AC10D75A2B89 /* TeslaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418CBC49A775E66482C713DAFA826737 /* TeslaAPI.swift */; };
@@ -32,6 +33,7 @@
 
 /* Begin PBXFileReference section */
 		0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = teslaapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeCurveView.swift; sourceTree = "<group>"; };
 		2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoEntry.swift; sourceTree = "<group>"; };
 		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; path = "phone-key.pem"; sourceTree = "<group>"; };
 		2DB939865EDF2ED93F518D75B9EB019F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 				BCFDC842B0626A842C2CD3F9E444DEAA /* Assets.xcassets */,
 				2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */,
 				7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */,
+				126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */,
 				68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */,
 				572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */,
 				D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */,
@@ -199,6 +202,7 @@
 				3F16DE1EB2E2CAFCA1F7DA52358B4B5D /* AppConfig.swift in Sources */,
 				DA169CE65E223BB9C9CBDD35DFF8107B /* AutoEntry.swift in Sources */,
 				4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */,
+				69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */,
 				16EE9E4589448768DCBA84EAAFAE4413 /* ChargeDetailView.swift in Sources */,
 				27CAF52203B8C3D16D4137F189A39B59 /* Components.swift in Sources */,
 				A78ED4EFBCA5B7FBCD8AA5964614BBC9 /* ContentView.swift in Sources */,

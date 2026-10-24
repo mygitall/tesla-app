@@ -13,6 +13,8 @@ struct ChargeDetailView: View {
     @State private var baseKwh = ""
     @State private var baseHours = ""
     @State private var baseKw = "60"
+    @State private var curve: [ChargeCurvePoint] = []
+    @State private var curveLoading = true
     @State private var year: Int = Calendar.current.component(.year, from: Date())
 
     private var s: VehicleSummary? { api.summary }
@@ -28,6 +30,7 @@ struct ChargeDetailView: View {
                     periodPicker
                     heroCard
                     paramGrid
+                    ChargeCurveView(points: curve, peak: api.chargeCurvePeak)
                     totalsCard
                     sessionListCard
                     sourceNote
@@ -60,6 +63,8 @@ struct ChargeDetailView: View {
             baselineEditor
         }
         .task {
+            curve = await api.loadChargeCurve()
+            curveLoading = false
             await api.loadChargeMonths()
             if allTime {
                 await api.loadChargeSummaryAll()
