@@ -17,6 +17,7 @@
 		4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */; };
 		4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */; };
 		69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */; };
+		7FD866AF7F79D1E411500F7E9EB5A87D /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */; };
 		A72866047347672E1E12F189B431CDB6 /* teslaappApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF828282C6FC64F66C139AEF5168BBD /* teslaappApp.swift */; };
 		A78ED4EFBCA5B7FBCD8AA5964614BBC9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */; };
 		B1B555390BE02FBA3783AC10D75A2B89 /* TeslaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418CBC49A775E66482C713DAFA826737 /* TeslaAPI.swift */; };
@@ -47,6 +48,7 @@
 		68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeDetailView.swift; sourceTree = "<group>"; };
 		7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConfig.swift; sourceTree = "<group>"; };
 		8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripsView.swift; sourceTree = "<group>"; };
+		9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		986215ACBFFE505122036F4E3D8E74F5 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 		9AF828282C6FC64F66C139AEF5168BBD /* teslaappApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = teslaappApp.swift; sourceTree = "<group>"; };
 		A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightTheme.swift; sourceTree = "<group>"; };
@@ -81,6 +83,7 @@
 				68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */,
 				572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */,
 				D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */,
+				9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */,
 				53E22F8492B612726059C9E878784B2D /* HomeView.swift */,
 				C9D3D4D0B459E1539B7FFC83C4D17E7A /* Info.plist */,
 				A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */,
@@ -206,6 +209,7 @@
 				16EE9E4589448768DCBA84EAAFAE4413 /* ChargeDetailView.swift in Sources */,
 				27CAF52203B8C3D16D4137F189A39B59 /* Components.swift in Sources */,
 				A78ED4EFBCA5B7FBCD8AA5964614BBC9 /* ContentView.swift in Sources */,
+				7FD866AF7F79D1E411500F7E9EB5A87D /* Haptics.swift in Sources */,
 				B7385AC6CBDEAD91C779814F9C0724D6 /* HomeView.swift in Sources */,
 				40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */,
 				B2F0334CF48D5A945C25AC0BACB9C0DD /* LoginView.swift in Sources */,

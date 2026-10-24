@@ -220,6 +220,7 @@ struct HomeView: View {
         let unlocked = !isLocked
         return Button {
             guard !api.busy else { return }     // 正在执行就不响应，避免状态错乱
+            Haptics.toggle()                    // 点击立刻震动
             let target = !isLocked              // 目标状态 = 当前状态取反
             // ① 立刻翻转视觉
             withAnimation(.easeOut(duration: 0.12)) { pendingLock = target }
@@ -227,9 +228,11 @@ struct HomeView: View {
                 await api.command(target ? "lock" : "unlock", label: target ? "上锁" : "解锁")
                 // ② 失败 → 立刻回滚
                 if api.actionIsError {
+                    Haptics.error()
                     withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
                     return
                 }
+                Haptics.success()
                 // ③ 成功 → 刷新真实状态后交回服务器
                 await api.refresh()
                 try? await Task.sleep(nanoseconds: 800_000_000)
@@ -257,7 +260,10 @@ struct HomeView: View {
     }
 
     private func actionButton(title: String, icon: String, active: Bool = false, tap: @escaping () -> Void) -> some View {
-        Button(action: tap) {
+        Button {
+            Haptics.tap()
+            tap()
+        } label: {
             VStack(spacing: 9) {
                 ZStack {
                     Circle()

@@ -47,7 +47,10 @@ struct TabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                Button { withAnimation(.easeOut(duration: 0.15)) { selected = idx } } label: {
+                Button {
+                        Haptics.selection()
+                        withAnimation(.easeOut(duration: 0.15)) { selected = idx }
+                    } label: {
                     VStack(spacing: 4) {
                         Image(systemName: item.1)
                             .font(.system(size: 19, weight: .light))
