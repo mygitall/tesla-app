@@ -37,7 +37,7 @@ struct HomeView: View {
                         Color.clear.frame(height: 96)
                     }
                     .padding(.horizontal, hPad)
-                    .padding(.top, 4)
+                    .padding(.top, 30)
                 }
             }
             .navigationBarHidden(true)
@@ -98,7 +98,6 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.top, 6)
     }
 
     // MARK: 车图
