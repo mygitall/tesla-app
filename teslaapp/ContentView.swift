@@ -11,11 +11,10 @@ struct ContentView: View {
                     switch tab {
                     case 0: HomeView(api: api)
                     case 1: TripsView(api: api)
-                    case 2: PlaceholderView(title: "神秘玩家", icon: "sparkles",
-                                            note: "彩蛋区，待开发")
-                    case 3: PlaceholderView(title: "特别车间", icon: "wrench.and.screwdriver.fill",
-                                            note: "保养提醒、轮胎、软件更新")
-                    default: PlaceholderView(title: "个人中心", icon: "person.fill",
+                    case 2: PlaceholderView(title: "数据", icon: "chart.bar",
+                                            note: "能耗趋势、月度统计")
+                    case 3: ChargeDetailView(api: api)
+                    default: PlaceholderView(title: "我的", icon: "person",
                                              note: "账号、密钥、自动锁设置")
                     }
                     TabBar(selected: $tab)
@@ -38,11 +37,11 @@ struct ContentView: View {
 struct TabBar: View {
     @Binding var selected: Int
     private let items: [(String, String)] = [
-        ("爱车", "car.fill"),
-        ("仪表盘", "speedometer"),
-        ("神秘玩家", "sparkles"),
-        ("特别车间", "wrench.and.screwdriver.fill"),
-        ("个人中心", "person.fill"),
+        ("车辆", "car.fill"),
+        ("地图", "map"),
+        ("数据", "chart.bar"),
+        ("充电", "bolt.fill"),
+        ("我的", "person"),
     ]
 
     var body: some View {
@@ -51,11 +50,11 @@ struct TabBar: View {
                 Button { withAnimation(.easeOut(duration: 0.15)) { selected = idx } } label: {
                     VStack(spacing: 4) {
                         Image(systemName: item.1)
-                            .font(.system(size: 17))
-                        Text(item.0).font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 19, weight: .light))
+                        Text(item.0).font(.system(size: 9.5, weight: .medium))
                     }
                     .frame(maxWidth: .infinity)
-                    .foregroundColor(selected == idx ? L.orange : L.sub)
+                    .foregroundColor(selected == idx ? L.sand : L.dim)
                 }
                 .buttonStyle(.plain)
             }

@@ -1,17 +1,24 @@
 import SwiftUI
 
-/// 深色主题（#151717 背景 / #efefef 文字）
+/// 深色高端主题（实测自参考设计稿）
 enum L {
-    static let bg = Color(hex: 0x151717)       // 背景
-    static let card = Color(hex: 0x1C1F20)     // 卡片
-    static let text = Color(hex: 0xEFEFEF)     // 主文字
-    static let sub = Color(hex: 0x8F9798)      // 次要文字
-    static let line = Color.white.opacity(0.08)
-    static let orange = Color(red: 1.0, green: 0.62, blue: 0.12)   // #FF9E1F
-    static let green = Color(hex: 0x34C759)
-    static let blue = Color(hex: 0x0A84FF)
-    static let purple = Color(hex: 0xBF5AF2)
-    static let fill = Color(hex: 0x232829)     // 胶囊/方块底
+    static let bg      = Color(hex: 0x08090A)   // 页面背景
+    static let card    = Color(hex: 0x141517)   // 卡片
+    static let card2   = Color(hex: 0x1A1B1D)   // 卡片内次级块
+    static let text    = Color(hex: 0xF5F5F5)   // 主文字
+    static let sub     = Color(hex: 0x7A7A7A)   // 次文字
+    static let dim     = Color(hex: 0x4A4A4A)   // 极弱文字
+    static let line    = Color(hex: 0x1E1F20)   // 分割线
+    static let sand    = Color(hex: 0xC8A880)   // 暖沙金（强调色）
+    static let glow    = Color(hex: 0x312B22)   // 顶部暖光晕
+
+    // 状态色（克制使用）
+    static let green   = Color(hex: 0x6FA37C)
+    static let orange  = Color(hex: 0xC8A880)   // 统一到沙金
+    static let blue    = Color(hex: 0x7C93AD)
+    static let purple  = Color(hex: 0x9B84A8)
+
+    static let fill    = Color(hex: 0x1A1B1D)   // 兼容旧代码的块底色
 }
 
 extension Color {
