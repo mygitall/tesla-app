@@ -60,11 +60,18 @@ struct HomeView: View {
     private var background: some View {
         ZStack(alignment: .top) {
             L.bg.ignoresSafeArea()
+            // 外层大光晕（面积大、很淡）
             RadialGradient(
-                colors: [L.glow.opacity(0.55), L.bg.opacity(0)],
-                center: .top, startRadius: 10, endRadius: 380
+                colors: [L.glow.opacity(0.20), L.bg.opacity(0)],
+                center: .top, startRadius: 10, endRadius: 760
             )
-            .frame(height: 420)
+            .frame(height: 900)
+            // 内层核心（顶部稍浓，让最上方接近参考稿的暖度）
+            RadialGradient(
+                colors: [L.glow.opacity(0.70), L.bg.opacity(0)],
+                center: .top, startRadius: 6, endRadius: 300
+            )
+            .frame(height: 380)
             .ignoresSafeArea()
         }
     }
