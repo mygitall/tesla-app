@@ -124,40 +124,43 @@ struct HomeView: View {
     // MARK: 电量卡（光环 + 续航 + 进度条，高度不变）
 
     private var batteryCard: some View {
-        HStack(spacing: 12) {
-            // 电量光环
-            ZStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.07), lineWidth: 5)
-                Circle()
-                    .trim(from: 0, to: batteryRatio)
-                    .stroke(L.ringGreen, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.6), value: batteryRatio)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                // 电量光环
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.07), lineWidth: 5)
+                    Circle()
+                        .trim(from: 0, to: batteryRatio)
+                        .stroke(L.ringGreen, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.6), value: batteryRatio)
 
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(s?.battery ?? 0)")
-                        .font(.system(size: 24, weight: .medium))
-                        .monospacedDigit()
-                        .foregroundColor(L.text)
-                    Text("%")
-                        .font(.system(size: 10, weight: .regular))
-                        .foregroundColor(L.sub)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(s?.battery ?? 0)")
+                            .font(.system(size: 24, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundColor(L.text)
+                        Text("%")
+                            .font(.system(size: 10, weight: .regular))
+                            .foregroundColor(L.sub)
+                    }
                 }
-            }
-            .frame(width: 54, height: 54)
+                .frame(width: 54, height: 54)
 
-            // 续航 + 进度条
-            VStack(alignment: .leading, spacing: 9) {
                 Text("续航 \(s?.rangeKm ?? 0) km")
                     .font(.system(size: 12))
                     .foregroundColor(L.sub)
-                progressBar
+
+                Spacer()
             }
+
+            // 进度条（光环下方，铺满卡片宽度）
+            progressBar
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 18)
-        .padding(.vertical, 19)
+        .padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
     }
 
