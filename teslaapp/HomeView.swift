@@ -124,28 +124,28 @@ struct HomeView: View {
     // MARK: 电量卡（光环 + 续航 + 进度条，高度不变）
 
     private var batteryCard: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             // 电量光环
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.07), lineWidth: 6)
+                    .stroke(Color.white.opacity(0.07), lineWidth: 5)
                 Circle()
                     .trim(from: 0, to: batteryRatio)
-                    .stroke(L.ringGreen, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(L.ringGreen, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.easeOut(duration: 0.6), value: batteryRatio)
 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(s?.battery ?? 0)")
-                        .font(.system(size: 36, weight: .medium))
+                        .font(.system(size: 30, weight: .medium))
                         .monospacedDigit()
                         .foregroundColor(L.text)
                     Text("%")
-                        .font(.system(size: 13, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(L.sub)
                 }
             }
-            .frame(width: 84, height: 84)
+            .frame(width: 54, height: 54)
 
             // 续航 + 进度条
             VStack(alignment: .leading, spacing: 9) {
