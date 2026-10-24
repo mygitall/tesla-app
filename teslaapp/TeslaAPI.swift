@@ -222,8 +222,30 @@ enum APIError: LocalizedError {
 final class TeslaAPI: ObservableObject {
     static let shared = TeslaAPI()
 
-    @Published var loggedIn = false
-    @Published var summary: VehicleSummary?
+    @Published var loggedIn = !AppConfig.accessKey.isEmpty
+    /// 启动时若本地有缓存和密钥，立刻乐观进入首页（不等网络）
+    private static let summaryCacheKey = "lastSummary.v1"
+
+    private func loadSummaryCache() {
+        guard let data = UserDefaults.standard.data(forKey: Self.summaryCacheKey) else { return }
+        if let s = try? JSONDecoder().decode(VehicleSummary.self, from: data) {
+            summary = s
+        }
+    }
+
+    private func saveSummaryCache(_ s: VehicleSummary) {
+        if let data = try? JSONEncoder().encode(s) {
+            UserDefaults.standard.set(data, forKey: Self.summaryCacheKey)
+        }
+
+    }
+
+    static func cachedSummary() -> VehicleSummary? {
+        guard let data = UserDefaults.standard.data(forKey: summaryCacheKey) else { return nil }
+        return try? JSONDecoder().decode(VehicleSummary.self, from: data)
+    }
+
+    @Published var summary: VehicleSummary? = TeslaAPI.cachedSummary()
     @Published var loading = false
     @Published var errorText: String?
     @Published var actionText: String?
@@ -302,6 +324,10 @@ final class TeslaAPI: ObservableObject {
     // MARK: 启动恢复
 
     func restore() async {
+        // 有密钥就立刻放行进首页，网络校验放后台做（避免启动转圈）
+        loadSummaryCache()
+        if !accessKey.isEmpty { loggedIn = true }
+
         if !hasSessionCookie(), !accessKey.isEmpty {
             _ = try? await keyLogin(accessKey)
         }
@@ -323,7 +349,7 @@ final class TeslaAPI: ObservableObject {
             }
         }
         loggedIn = true
-        await refresh()
+        await refresh()   // 后台刷新，不阻塞界面
         return
         if await verifySession() {
             loggedIn = true
@@ -393,7 +419,7 @@ final class TeslaAPI: ObservableObject {
         }
 
         loggedIn = true
-        await refresh()
+        await refresh()   // 后台刷新，不阻塞界面
     }
 
     /// 用密钥换登录会话：GET /k/<key> 服务端会回 302 + Set-Cookie
@@ -417,7 +443,7 @@ final class TeslaAPI: ObservableObject {
         }
         accessKey = key
         loggedIn = true
-        await refresh()
+        await refresh()   // 后台刷新，不阻塞界面
         return true
     }
 
@@ -442,6 +468,7 @@ final class TeslaAPI: ObservableObject {
         do {
             let s: VehicleSummary = try await get("/api/app/summary", timeout: 55)
             summary = s
+            saveSummaryCache(s)
             if s.dataError != nil {
                 errorText = "车辆数据读取失败，稍后再试"
             }

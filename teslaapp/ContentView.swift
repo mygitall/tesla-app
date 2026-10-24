@@ -2,17 +2,11 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var api = TeslaAPI.shared
-    @State private var booted = false
     @State private var tab = 0
 
     var body: some View {
         Group {
-            if !booted {
-                ZStack {
-                    L.bg.ignoresSafeArea()
-                    ProgressView().tint(L.green)
-                }
-            } else if api.loggedIn {
+            if api.loggedIn {
                 ZStack(alignment: .bottom) {
                     switch tab {
                     case 0: HomeView(api: api)
@@ -34,8 +28,7 @@ struct ContentView: View {
         .task {
             // 蓝牙先启动：不依赖网络和登录，飞行模式下也能开关车门
             TeslaKey.shared.start()
-            await api.restore()
-            booted = true
+            Task { await api.restore() }
         }
     }
 }
