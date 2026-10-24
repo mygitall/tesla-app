@@ -92,7 +92,18 @@ struct Trip: Codable, Identifiable {
     var samples: Int?
 }
 
-struct TripsResp: Codable { var trips: [Trip] }
+struct TripsTotals: Codable {
+    var count: Int
+    var distanceKm: Double
+    var durationMin: Int
+    var firstTs: Int?
+    var lastTs: Int?
+}
+
+struct TripsResp: Codable {
+    var trips: [Trip]
+    var totals: TripsTotals?
+}
 
 struct TrackPoint: Codable, Identifiable {
     var ts: Int
@@ -220,6 +231,7 @@ final class TeslaAPI: ObservableObject {
     @Published var chargeSummary: ChargeSummaryResp?
     @Published var chargeLoading = false
     @Published var trips: [Trip] = []
+    @Published var tripsTotals: TripsTotals?
     @Published var tripsLoading = false
     @Published var actionIsError = false
     @Published var busy = false
@@ -510,7 +522,9 @@ final class TeslaAPI: ObservableObject {
         do {
             let (data, resp) = try await session.data(for: req)
             guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
-            trips = try JSONDecoder().decode(TripsResp.self, from: data).trips
+            let r = try JSONDecoder().decode(TripsResp.self, from: data)
+            trips = r.trips
+            tripsTotals = r.totals
         } catch {
             actionText = "行程加载失败：\(error.localizedDescription)"
         }

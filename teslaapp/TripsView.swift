@@ -42,9 +42,9 @@ struct TripsView: View {
     private var summaryCard: some View {
         LCard {
             HStack(spacing: 0) {
-                stat("\(api.trips.count)", "行程")
+                stat("\(api.tripsTotals?.count ?? api.trips.count)", "累计行程")
                 divider
-                stat(String(format: "%.0f", api.trips.reduce(0) { $0 + $1.distanceKm }), "总里程 km")
+                stat(String(format: "%.0f", api.tripsTotals?.distanceKm ?? api.trips.reduce(0) { $0 + $1.distanceKm }), "累计里程 km")
                 divider
                 stat(totalDurationText, "总时长", small: true)
             }
@@ -68,7 +68,7 @@ struct TripsView: View {
     }
 
     private var totalDurationText: String {
-        let m = api.trips.reduce(0) { $0 + $1.durationMin }
+        let m = api.tripsTotals?.durationMin ?? api.trips.reduce(0) { $0 + $1.durationMin }
         if m <= 0 { return "0 分" }
         return m >= 60 ? "\(m / 60)时\(m % 60)分" : "\(m)分"
     }
