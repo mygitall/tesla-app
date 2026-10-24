@@ -21,7 +21,7 @@ struct TodayTripCard: View {
                     .foregroundColor(L.dim)
             }
 
-            // 三栏数据
+            // 三栏数据（整体右移 10pt，宽度不变）
             HStack(spacing: 0) {
                 cell(String(format: "%.1f", distanceKm), "km", leading: 0)
                 divider
@@ -29,6 +29,8 @@ struct TodayTripCard: View {
                 divider
                 cell(String(format: "%.0f", energyKwh), "kWh", leading: 14)
             }
+            .padding(.leading, 10)
+            .padding(.trailing, -10)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 15)
