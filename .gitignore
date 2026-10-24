@@ -1,0 +1,20 @@
+# ── 私钥（车辆手机钥匙，绝对不能提交）──
+teslaapp/phone-key.pem
+keys/
+*.pem
+!Frameworks/**/Info.plist
+
+# ── Go 编译产物（62MB，用 go-bridge/build.sh 重建）──
+Frameworks/
+
+# ── Xcode 生成物 ──
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# ── 系统文件 ──
+.DS_Store
+*.swp
