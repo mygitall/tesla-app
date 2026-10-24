@@ -10,6 +10,8 @@ struct HomeView: View {
     @State private var showBleLog = false
     /// 乐观锁状态：点下去立刻切换视觉，等服务器确认后清空
     @State private var pendingLock: Bool?
+    /// 定位失败提示
+    @State private var posAlert: String?
 
     private var s: VehicleSummary? { api.summary }
 
@@ -53,6 +55,9 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showSettings) { SettingsSheet(api: api) }
         .sheet(isPresented: $showBleLog) { BleLogSheet(ble: ble) }
+        .alert(item: $posAlert) { msg in
+            Alert(title: Text("无法定位"), message: Text(msg), dismissButton: .default(Text("好")))
+        }
     }
 
     // MARK: 背景（顶部暖色光晕）
@@ -386,8 +391,13 @@ struct HomeView: View {
     }
 
     private func openCarInMaps() {
-        guard let lat = s?.lat, let lon = s?.lon else { return }
-        let url = URL(string: "http://maps.apple.com/?ll=\(lat),\(lon)&q=我的车")!
+        guard let lat = s?.lat, let lon = s?.lon else {
+            posAlert = "车辆位置暂不可用（车可能在睡眠或没有信号）"
+            return
+        }
+        // 特斯拉给 WGS-84，Apple 地图在中国要 GCJ-02，否则偏移 300~500 米
+        let g = CoordTransform.toGCJ(lat: lat, lon: lon)
+        let url = URL(string: "https://maps.apple.com/?ll=\(g.lat),\(g.lon)&q=我的车")!
         UIApplication.shared.open(url)
     }
 }
@@ -439,4 +449,10 @@ struct BleLogSheet: View {
         }
         .preferredColorScheme(.dark)
     }
+}
+
+
+// 让 String 能直接用于 .alert(item:)
+extension String: Identifiable {
+    public var id: String { self }
 }
