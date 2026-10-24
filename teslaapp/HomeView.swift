@@ -193,12 +193,9 @@ struct HomeView: View {
 
     private var actionRow: some View {
         HStack(spacing: 10) {
-            actionButton(title: (s?.locked ?? true) ? "解锁" : "上锁",
-                         icon: (s?.locked ?? true) ? "lock.open" : "lock",
-                         active: s?.locked == false) {
-                let locked = s?.locked ?? true
-                Task { await api.command(locked ? "unlock" : "lock", label: locked ? "解锁" : "上锁") }
-            }
+            // 显示「当前状态」：解锁中 → 解锁图标+文字；已上锁 → 上锁图标+文字
+            // 点击执行相反的操作
+            lockButton
             actionButton(title: "启动", icon: "key") {
                 Task { await api.command("drive", label: "无钥匙启动") }
             }
@@ -211,6 +208,38 @@ struct HomeView: View {
                 openCarInMaps()
             }
         }
+    }
+
+    /// 锁按钮：图标/文字反映「当前状态」，点击切换
+    private var lockButton: some View {
+        let unlocked = (s?.locked == false)          // 当前是否解锁
+        return Button {
+            Task {
+                if unlocked {
+                    await api.command("lock", label: "上锁")
+                } else {
+                    await api.command("unlock", label: "解锁")
+                }
+            }
+        } label: {
+            VStack(spacing: 9) {
+                ZStack {
+                    Circle()
+                        .stroke(unlocked ? L.sand : L.text.opacity(0.45), lineWidth: 1)
+                        .frame(width: 38, height: 38)
+                    Image(systemName: unlocked ? "lock.open" : "lock")
+                        .font(.system(size: 15, weight: .light))
+                        .foregroundColor(unlocked ? L.sand : L.text.opacity(0.9))
+                }
+                Text(unlocked ? "解锁" : "上锁")
+                    .font(.system(size: 11))
+                    .foregroundColor(unlocked ? L.sand : L.text.opacity(0.85))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+        }
+        .buttonStyle(.plain)
     }
 
     private func actionButton(title: String, icon: String, active: Bool = false, tap: @escaping () -> Void) -> some View {
