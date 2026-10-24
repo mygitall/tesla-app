@@ -92,7 +92,7 @@ struct HomeView: View {
             Spacer()
             Button { showSettings = true } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .light))
+                    .font(.system(size: 20, weight: .light))
                     .foregroundColor(L.text.opacity(0.85))
                     .frame(width: 34, height: 34)
             }

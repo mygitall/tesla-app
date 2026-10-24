@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -34,17 +34,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = teslaapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesla.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeCurveView.swift; sourceTree = "<group>"; };
 		2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoEntry.swift; sourceTree = "<group>"; };
-		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; path = "phone-key.pem"; sourceTree = "<group>"; };
+		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; lastKnownFileType = text; path = "phone-key.pem"; sourceTree = "<group>"; };
 		2DB939865EDF2ED93F518D75B9EB019F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaKey.swift; sourceTree = "<group>"; };
 		418CBC49A775E66482C713DAFA826737 /* TeslaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaAPI.swift; sourceTree = "<group>"; };
 		483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		53E22F8492B612726059C9E878784B2D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		5A2A12F3CD147544314F61FE6F8B8B42 /* TeslaBLE.xcframework */ = {isa = PBXFileReference; name = TeslaBLE.xcframework; path = Frameworks/TeslaBLE.xcframework; sourceTree = "<group>"; };
+		5A2A12F3CD147544314F61FE6F8B8B42 /* TeslaBLE.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = TeslaBLE.xcframework; path = Frameworks/TeslaBLE.xcframework; sourceTree = "<group>"; };
 		6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerCard.swift; sourceTree = "<group>"; };
 		68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeDetailView.swift; sourceTree = "<group>"; };
 		7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConfig.swift; sourceTree = "<group>"; };
@@ -117,7 +117,7 @@
 		95868F5C862035639B4BC3EEE0B462D5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */,
+				0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -155,7 +155,7 @@
 			);
 			name = teslaapp;
 			productName = teslaapp;
-			productReference = 0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */;
+			productReference = 0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -236,6 +236,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				DEVELOPMENT_TEAM = YPFHQB8HX8;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -253,6 +254,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				DEVELOPMENT_TEAM = YPFHQB8HX8;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
