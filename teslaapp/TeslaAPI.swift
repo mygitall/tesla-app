@@ -33,6 +33,10 @@ struct ChargeSessionItem: Codable, Identifiable {
     var startBattery: Int?
     var endBattery: Int?
     var durationMin: Int
+    var samples: Int?
+    var estimated: Bool?
+    var durationEstimated: Bool?
+    var truncated: Bool?
     var id: Int { startTs }
 }
 
@@ -67,6 +71,40 @@ struct ChargeMonthsResp: Codable {
     var months: [ChargeMonth]
     var totalSessions: Int
 }
+
+
+// MARK: - 行程
+
+struct Trip: Codable, Identifiable {
+    var id: Int
+    var startTs: Int
+    var endTs: Int
+    var distanceKm: Double
+    var durationMin: Int
+    var startBattery: Int?
+    var endBattery: Int?
+    var maxSpeedKmh: Int?
+    var avgSpeedKmh: Int?
+    var startLat: Double?
+    var startLon: Double?
+    var endLat: Double?
+    var endLon: Double?
+    var samples: Int?
+}
+
+struct TripsResp: Codable { var trips: [Trip] }
+
+struct TrackPoint: Codable, Identifiable {
+    var ts: Int
+    var lat: Double
+    var lon: Double
+    var frame: String?      // "gcj" = 已是国内坐标系，无需转换
+    var speed: Int?
+    var battery: Int?
+    var id: Int { ts }
+}
+
+struct TripDetailResp: Codable { var track: [TrackPoint] }
 
 struct VehicleSummary: Codable {
     var id: Int64
@@ -181,6 +219,8 @@ final class TeslaAPI: ObservableObject {
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
     @Published var chargeLoading = false
+    @Published var trips: [Trip] = []
+    @Published var tripsLoading = false
     @Published var actionIsError = false
     @Published var busy = false
     /// 明确被服务器拒绝（401/403）时才为 true；网络错误保持 false
@@ -459,6 +499,36 @@ final class TeslaAPI: ObservableObject {
     }
 
     // MARK: 设置
+
+    /// 行程列表
+    func loadTrips() async {
+        tripsLoading = true
+        defer { tripsLoading = false }
+        var req = URLRequest(url: url("/api/trips?limit=50"))
+        req.httpMethod = "GET"
+        req.timeoutInterval = 25
+        do {
+            let (data, resp) = try await session.data(for: req)
+            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
+            trips = try JSONDecoder().decode(TripsResp.self, from: data).trips
+        } catch {
+            actionText = "行程加载失败：\(error.localizedDescription)"
+        }
+    }
+
+    /// 单段行程的轨迹点
+    func loadTripTrack(id: Int) async -> [TrackPoint] {
+        var req = URLRequest(url: url("/api/trips/\(id)"))
+        req.httpMethod = "GET"
+        req.timeoutInterval = 25
+        do {
+            let (data, resp) = try await session.data(for: req)
+            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+            return try JSONDecoder().decode(TripDetailResp.self, from: data).track
+        } catch {
+            return []
+        }
+    }
 
     /// 充电月份列表
     func loadChargeMonths() async {

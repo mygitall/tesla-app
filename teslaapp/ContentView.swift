@@ -16,8 +16,7 @@ struct ContentView: View {
                 ZStack(alignment: .bottom) {
                     switch tab {
                     case 0: HomeView(api: api)
-                    case 1: PlaceholderView(title: "仪表盘", icon: "speedometer",
-                                            note: "行程轨迹、能耗趋势、充电历史")
+                    case 1: TripsView(api: api)
                     case 2: PlaceholderView(title: "神秘玩家", icon: "sparkles",
                                             note: "彩蛋区，待开发")
                     case 3: PlaceholderView(title: "特别车间", icon: "wrench.and.screwdriver.fill",

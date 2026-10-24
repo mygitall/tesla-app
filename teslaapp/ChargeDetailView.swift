@@ -367,11 +367,23 @@ struct ChargeDetailView: View {
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text(String(format: "%.1f 度", item.energyKwh))
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(L.orange)
-                                Text("\(item.durationMin) 分钟 · 峰值 \(String(format: "%.1f", item.peakPower))kW")
+                                HStack(spacing: 4) {
+                                    if item.estimated == true {
+                                        Text("估").font(.system(size: 8, weight: .bold))
+                                            .foregroundColor(Color(hex: 0x151717))
+                                            .padding(.horizontal, 4).padding(.vertical, 1)
+                                            .background(Capsule().fill(L.orange))
+                                    }
+                                    Text(String(format: "%.1f 度", item.energyKwh))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(L.orange)
+                                }
+                                Text("\(durText(item.durationMin)) · 峰值 \(String(format: "%.1f", item.peakPower))kW")
                                     .font(.system(size: 9)).foregroundColor(L.sub)
+                                if item.truncated == true {
+                                    Text("后续采样缺失，已按电量差补算")
+                                        .font(.system(size: 8)).foregroundColor(L.sub.opacity(0.8))
+                                }
                             }
                         }
                         .padding(.vertical, 6)
