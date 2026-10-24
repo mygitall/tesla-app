@@ -148,9 +148,16 @@ struct HomeView: View {
                 }
                 .frame(width: 54, height: 54)
 
-                Text("续航 \(s?.rangeKm ?? 0) km")
-                    .font(.system(size: 12))
-                    .foregroundColor(L.sub)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("续航 \(s?.rangeKm ?? 0) km")
+                        .font(.system(size: 12))
+                        .foregroundColor(L.sub)
+                    if let added = s?.addedKm, added > 0 {
+                        Text("上次充电 +\(added) km")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(L.dim)
+                    }
+                }
 
                 Spacer()
             }

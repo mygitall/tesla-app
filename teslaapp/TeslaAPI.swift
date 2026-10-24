@@ -146,6 +146,7 @@ struct VehicleSummary: Codable {
     var battery: Int?
     var batteryNominal: Int?
     var rangeKm: Int?
+    var addedKm: Int?          // 上次充电增加的续航（km）
     var charging: String?
     var chargeLimit: Int?
     var locked: Bool?
