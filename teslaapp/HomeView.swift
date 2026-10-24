@@ -198,8 +198,8 @@ struct HomeView: View {
                 let locked = s?.locked ?? true
                 Task { await api.command(locked ? "unlock" : "lock", label: locked ? "解锁" : "上锁") }
             }
-            actionButton(title: "上锁", icon: "lock") {
-                Task { await api.command("lock", label: "上锁") }
+            actionButton(title: "启动", icon: "key") {
+                Task { await api.command("drive", label: "无钥匙启动") }
             }
             actionButton(title: "空调", icon: "fanblades",
                          active: s?.climateOn == true) {
