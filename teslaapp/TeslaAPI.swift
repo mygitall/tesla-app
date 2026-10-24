@@ -273,6 +273,8 @@ final class TeslaAPI: ObservableObject {
     @Published var tripsLoading = false
     @Published var actionIsError = false
     @Published var busy = false
+    /// busy 开始时间，用于自动解除卡死
+    private var busySince: Date?
     /// 明确被服务器拒绝（401/403）时才为 true；网络错误保持 false
     var lastAuthFailed = false
 
@@ -514,11 +516,17 @@ final class TeslaAPI: ObservableObject {
     // MARK: 指令
 
     func command(_ action: String, label: String) async {
+        // 卡死自愈：超过 25 秒仍 busy，视为异常并允许重试
+        if busy, let t = busySince, Date().timeIntervalSince(t) > 25 {
+            busy = false
+            busySince = nil
+        }
         guard !busy else { return }
         busy = true
+        busySince = Date()
         actionIsError = false
         actionText = "\(label)中…"
-        defer { busy = false }
+        defer { busy = false; busySince = nil }
 
         var req = URLRequest(url: url("/api/cmd/\(action)"))
         req.httpMethod = "POST"

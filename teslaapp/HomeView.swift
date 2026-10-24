@@ -220,7 +220,7 @@ struct HomeView: View {
         let unlocked = !isLocked
         return Button {
             guard !api.busy else { return }     // 正在执行就不响应，避免状态错乱
-            let target = isLocked               // 目标是「锁上」
+            let target = !isLocked              // 目标状态 = 当前状态取反
             // ① 立刻翻转视觉
             withAnimation(.easeOut(duration: 0.12)) { pendingLock = target }
             Task {
