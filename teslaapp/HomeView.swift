@@ -160,25 +160,11 @@ struct HomeView: View {
 
     private var todayCard: some View {
         NavigationLink(destination: TripsListView(api: api)) {
-            VStack(spacing: 10) {
-                HStack {
-                    Text("今日行程").font(.system(size: 13, weight: .medium)).foregroundColor(L.sub)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(L.dim)
-                }
-                HStack(spacing: 0) {
-                    metric(String(format: "%.1f", s?.today?.distanceKm ?? 0), "km")
-                    vDivider
-                    metric(durText(s?.today?.driveMinutes), "小时")
-                    vDivider
-                    metric(String(format: "%.0f", s?.today?.energyKwh ?? 0), "kWh")
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+            TodayTripCard(
+                distanceKm: s?.today?.distanceKm ?? 0,
+                durationText: durText(s?.today?.driveMinutes),
+                energyKwh: s?.today?.energyKwh ?? 0
+            )
         }
         .buttonStyle(.plain)
     }

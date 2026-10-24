@@ -10,7 +10,8 @@ enum L {
     static let dim     = Color(hex: 0x4A4A4A)   // 极弱文字
     static let line    = Color(hex: 0x1E1F20)   // 分割线
     static let sand    = Color(hex: 0xC8A880)   // 暖沙金（强调色）
-    static let glow    = Color(hex: 0x312B22)   // 顶部暖光晕
+    static let glow    = Color(hex: 0x312B22)
+    static let red     = Color(hex: 0xC62828)   // 卡片红色（可改）   // 顶部暖光晕
 
     // 状态色（克制使用）
     static let green   = Color(hex: 0x6FA37C)

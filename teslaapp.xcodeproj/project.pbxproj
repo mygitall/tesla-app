@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 50;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -30,20 +30,21 @@
 		D9FB1D1D65567CE523D1FAC62071F360 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986215ACBFFE505122036F4E3D8E74F5 /* SettingsSheet.swift */; };
 		DA169CE65E223BB9C9CBDD35DFF8107B /* AutoEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */; };
 		EE673D39FC545CAF778E65394BBDCBA1 /* PowerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */; };
+		F46D8971D47409F7AAC3013F41825715 /* TodayTripCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D917F9E396A51925B949347ABD600A9F /* TodayTripCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesla.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = teslaapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeCurveView.swift; sourceTree = "<group>"; };
 		2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoEntry.swift; sourceTree = "<group>"; };
-		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; lastKnownFileType = text; path = "phone-key.pem"; sourceTree = "<group>"; };
+		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; path = "phone-key.pem"; sourceTree = "<group>"; };
 		2DB939865EDF2ED93F518D75B9EB019F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaKey.swift; sourceTree = "<group>"; };
 		418CBC49A775E66482C713DAFA826737 /* TeslaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaAPI.swift; sourceTree = "<group>"; };
 		483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		53E22F8492B612726059C9E878784B2D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		5A2A12F3CD147544314F61FE6F8B8B42 /* TeslaBLE.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = TeslaBLE.xcframework; path = Frameworks/TeslaBLE.xcframework; sourceTree = "<group>"; };
+		5A2A12F3CD147544314F61FE6F8B8B42 /* TeslaBLE.xcframework */ = {isa = PBXFileReference; name = TeslaBLE.xcframework; path = Frameworks/TeslaBLE.xcframework; sourceTree = "<group>"; };
 		6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerCard.swift; sourceTree = "<group>"; };
 		68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeDetailView.swift; sourceTree = "<group>"; };
 		7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConfig.swift; sourceTree = "<group>"; };
@@ -58,6 +59,7 @@
 		D40D398972DC7FB861943DCAE19A565A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayStatTile.swift; sourceTree = "<group>"; };
 		D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D917F9E396A51925B949347ABD600A9F /* TodayTripCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayTripCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 				3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */,
 				483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */,
 				D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */,
+				D917F9E396A51925B949347ABD600A9F /* TodayTripCard.swift */,
 				8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */,
 				B8C76F64DD22FDB0C368038125452AC9 /* Preview Content */,
 			);
@@ -114,7 +117,7 @@
 		95868F5C862035639B4BC3EEE0B462D5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */,
+				0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -152,7 +155,7 @@
 			);
 			name = teslaapp;
 			productName = teslaapp;
-			productReference = 0B90B0A42ED031477861199BEDD8C9A4 /* Tesla.app */;
+			productReference = 0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -219,6 +222,7 @@
 				B55A25EEBE897958AB800B5B0E5A2313 /* TeslaKey.swift in Sources */,
 				3E416D3BBB6EB15087BAC1E9F431FE89 /* Theme.swift in Sources */,
 				BB4A29DB2036959F0774B4830792A7AC /* TodayStatTile.swift in Sources */,
+				F46D8971D47409F7AAC3013F41825715 /* TodayTripCard.swift in Sources */,
 				4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */,
 				A72866047347672E1E12F189B431CDB6 /* teslaappApp.swift in Sources */,
 			);
@@ -232,7 +236,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				DEVELOPMENT_TEAM = YPFHQB8HX8;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
@@ -250,7 +253,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				DEVELOPMENT_TEAM = YPFHQB8HX8;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"Frameworks\"",
