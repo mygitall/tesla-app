@@ -4,39 +4,51 @@ import CoreLocation
 
 // MARK: - 行程列表
 
+/// 底部「仪表盘」标签用：自带导航容器
 struct TripsView: View {
     @ObservedObject var api: TeslaAPI
 
     var body: some View {
         NavigationView {
-            ZStack {
-                L.bg.ignoresSafeArea()
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 12) {
-                        summaryCard
-                        if api.trips.isEmpty {
-                            emptyCard
-                        } else {
-                            ForEach(api.trips) { t in
-                                NavigationLink(destination: TripDetailView(trip: t, api: api)) {
-                                    TripRow(trip: t)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        Color.clear.frame(height: 90)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                }
-            }
-            .navigationBarHidden(true)
-            .refreshable { await api.loadTrips() }
-            .task {
-                if api.trips.isEmpty { await api.loadTrips() }
-            }
+            TripsListView(api: api)
+                .navigationBarHidden(true)
         }
         .navigationViewStyle(.stack)
+    }
+}
+
+/// 行程列表（可被其他页面 push 进来，不带自己的导航容器）
+struct TripsListView: View {
+    @ObservedObject var api: TeslaAPI
+
+    var body: some View {
+        ZStack {
+            L.bg.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 12) {
+                    summaryCard
+                    if api.trips.isEmpty {
+                        emptyCard
+                    } else {
+                        ForEach(api.trips) { t in
+                            NavigationLink(destination: TripDetailView(trip: t, api: api)) {
+                                TripRow(trip: t)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    Color.clear.frame(height: 90)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+            }
+        }
+        .navigationTitle("行程")
+        .navigationBarTitleDisplayMode(.inline)
+        .refreshable { await api.loadTrips() }
+        .task {
+            if api.trips.isEmpty { await api.loadTrips() }
+        }
     }
 
     private var summaryCard: some View {

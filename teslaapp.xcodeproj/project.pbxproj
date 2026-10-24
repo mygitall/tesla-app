@@ -23,6 +23,7 @@
 		B484F01C6A8C6EB19A3E5C00B35EF581 /* phone-key.pem in Resources */ = {isa = PBXBuildFile; fileRef = 2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */; };
 		B55A25EEBE897958AB800B5B0E5A2313 /* TeslaKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */; };
 		B7385AC6CBDEAD91C779814F9C0724D6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E22F8492B612726059C9E878784B2D /* HomeView.swift */; };
+		BB4A29DB2036959F0774B4830792A7AC /* TodayStatTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */; };
 		D88A8FF34C33F30CEABF8B0E50259B5B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D40D398972DC7FB861943DCAE19A565A /* Preview Assets.xcassets */; };
 		D9FB1D1D65567CE523D1FAC62071F360 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986215ACBFFE505122036F4E3D8E74F5 /* SettingsSheet.swift */; };
 		DA169CE65E223BB9C9CBDD35DFF8107B /* AutoEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */; };
@@ -51,6 +52,7 @@
 		C640E15664DD062AEEB97E5B09B2EFA0 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		C9D3D4D0B459E1539B7FFC83C4D17E7A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D40D398972DC7FB861943DCAE19A565A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayStatTile.swift; sourceTree = "<group>"; };
 		D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -87,6 +89,7 @@
 				9AF828282C6FC64F66C139AEF5168BBD /* teslaappApp.swift */,
 				3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */,
 				483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */,
+				D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */,
 				8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */,
 				B8C76F64DD22FDB0C368038125452AC9 /* Preview Content */,
 			);
@@ -207,6 +210,7 @@
 				B1B555390BE02FBA3783AC10D75A2B89 /* TeslaAPI.swift in Sources */,
 				B55A25EEBE897958AB800B5B0E5A2313 /* TeslaKey.swift in Sources */,
 				3E416D3BBB6EB15087BAC1E9F431FE89 /* Theme.swift in Sources */,
+				BB4A29DB2036959F0774B4830792A7AC /* TodayStatTile.swift in Sources */,
 				4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */,
 				A72866047347672E1E12F189B431CDB6 /* teslaappApp.swift in Sources */,
 			);

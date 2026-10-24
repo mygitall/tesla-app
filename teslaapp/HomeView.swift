@@ -129,15 +129,6 @@ struct HomeView: View {
     }
 
 
-    private func squareStat(_ v: String, _ l: String) -> some View {
-        VStack(spacing: 3) {
-            Text(v).font(.system(size: 14, weight: .semibold)).foregroundColor(L.text)
-            Text(l).font(.system(size: 10)).foregroundColor(L.sub)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(L.fill))
-    }
 
     // MARK: 今日
 
@@ -155,12 +146,15 @@ struct HomeView: View {
 
                 timeline
 
-                HStack(spacing: 8) {
-                    squareStat(String(format: "%.1f km", s?.today?.distanceKm ?? 0), "今日里程")
-                    squareStat(durText(s?.today?.driveMinutes), "驾驶时长")
-                    squareStat(String(format: "¥%.2f", s?.today?.cost ?? 0), "行驶花费")
-                    squareStat(String(format: "%.1f kWh", s?.today?.energyKwh ?? 0), "今日耗电")
+                NavigationLink(destination: TripsListView(api: api)) {
+                    HStack(spacing: 8) {
+                        TodayStatTile(String(format: "%.1f km", s?.today?.distanceKm ?? 0), "今日里程")
+                        TodayStatTile(durText(s?.today?.driveMinutes), "驾驶时长")
+                        TodayStatTile(String(format: "¥%.2f", s?.today?.cost ?? 0), "行驶花费")
+                        TodayStatTile(String(format: "%.1f kWh", s?.today?.energyKwh ?? 0), "今日耗电")
+                    }
                 }
+                .buttonStyle(.plain)
             }
         }
     }
