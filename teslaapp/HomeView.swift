@@ -137,11 +137,11 @@ struct HomeView: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(s?.battery ?? 0)")
-                        .font(.system(size: 30, weight: .medium))
+                        .font(.system(size: 24, weight: .medium))
                         .monospacedDigit()
                         .foregroundColor(L.text)
                     Text("%")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(.system(size: 10, weight: .regular))
                         .foregroundColor(L.sub)
                 }
             }
@@ -157,7 +157,7 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 18)
-        .padding(.vertical, 4)
+        .padding(.vertical, 19)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
     }
 
