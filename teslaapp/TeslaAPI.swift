@@ -600,8 +600,8 @@ final class TeslaAPI: ObservableObject {
     }
 
     /// 告诉服务器「手机就在车边」：抑制离车自动锁 + 保持高频采集
-    func presence(seconds: Int = 600) async {
-        var req = URLRequest(url: url("/api/recorder/presence?sec=\(seconds)"))
+    func presence(seconds: Int = 180, present: Bool = true) async {
+        var req = URLRequest(url: url("/api/recorder/presence?sec=\(seconds)&present=\(present ? 1 : 0)"))
         req.httpMethod = "POST"
         req.timeoutInterval = 12
         _ = try? await session.data(for: req)

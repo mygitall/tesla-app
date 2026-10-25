@@ -76,8 +76,11 @@ struct HomeView: View {
         .onChange(of: ble.connected) { on in
             // 蓝牙连上车辆 = 人就在车边，通知服务器开始高频采集
             if on {
-                Task { await api.presence() }   // 手机在车边 → 不要自动锁
+                Task { await api.presence(present: ble.lastRSSI >= -80) }
                 lastWakePing = Date()
+            } else {
+                // 蓝牙断开 = 人走了 → 立刻解除抑制，让自动锁生效
+                Task { await api.presence(present: false) }
             }
         }
         .onChange(of: api.busy) { busy in
