@@ -20,6 +20,21 @@ final class TeslaKey: NSObject, ObservableObject {
     @Published var detail: String = ""
     @Published var connected = false
     @Published var lastRSSI: Int = -127
+    /// 最近信号来自哪辆车（用于诊断）
+    @Published var lastRSSISource: String = "-"
+    /// 已确认的车辆外设 ID（后台没有 broadcast name 时靠它认出本车）
+    private var myPeripheralID: UUID? {
+        get {
+            guard let s = UserDefaults.standard.string(forKey: "myCarPeripheralID") else { return nil }
+            return UUID(uuidString: s)
+        }
+        set { UserDefaults.standard.set(newValue?.uuidString, forKey: "myCarPeripheralID") }
+    }
+    /// 记录过的其他车辆名，避免重复刷日志
+    private var foreignNames = Set<String>()
+    /// 上次自动解锁时间（冷却，避免反复解锁）
+    private var lastAutoUnlockAt: Date?
+    static let autoUnlockCooldown: TimeInterval = 300
     @Published var scanCount = 0          // 扫到过几次
     @Published var events: [String] = []   // 蓝牙事件日志（持久化）
     @Published var centralStateRaw: Int = -1
@@ -134,8 +149,15 @@ final class TeslaKey: NSObject, ObservableObject {
         out.append("VIN: \(vin)")
         out.append("蓝牙状态 raw: \(centralStateRaw)  （0未知 1重置 2不支持 3无权限 4关闭 5已开启）")
         out.append("扫描次数: \(scanCount)   附近设备: \(nearbyCount)")
-        out.append("最近信号: \(lastRSSI) dBm   自动解锁: \(autoUnlockEnabled ? "开" : "关")")
+        out.append("本车广播名: \(Self.localName(for: vin))")
+        out.append("本车识别: \(myPeripheralID == nil ? "尚未确认（等一次成功会话）" : "已记住外设 ID")")
+        out.append("最近信号: \(lastRSSI) dBm（来源：\(lastRSSISource)）")
+        out.append("自动解锁: \(autoUnlockEnabled ? "开" : "关")   自动解锁阈值: \(Self.autoUnlockRSSI) dBm")
+        out.append("忽略的其他车辆: \(foreignNames.isEmpty ? "无" : foreignNames.sorted().joined(separator: ", "))")
         out.append("状态: \(phase.rawValue) / \(detail)")
+        out.append("— 关键判定 —")
+        out.append("  · 在场阈值 -80 dBm：当前 \(lastRSSI >= -80 ? "在场" : "已离开")（\(lastRSSI) dBm）")
+        out.append("  · 解锁阈值 \(Self.autoUnlockRSSI) dBm：当前 \(lastRSSI >= Self.autoUnlockRSSI ? "够强" : "不够")")
         out.append("--- 事件日志（新→旧）---")
         out.append(contentsOf: events)
         return out.joined(separator: "\n")
@@ -369,9 +391,37 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
 
             let byUUID = services.contains(Self.serviceUUID)
                 || services.contains(Self.advServiceUUID)
-            let byName = !name.isEmpty && name == Self.localName(for: self.vin)
+            let myName = Self.localName(for: self.vin)
+            let byName = !name.isEmpty && name == myName
             guard byUUID || byName else { return }
+
+            // ── 关键：区分「本车」和「邻居的车」 ──
+            // 所有特斯拉都广播 1122，只靠 UUID 会把邻居车当成本车，
+            // 导致：信号取错（以为你走远了）、连到别人车上（配对失败）。
+            var identity = "?"
+            let isMine: Bool
+            if !name.isEmpty {
+                isMine = (name == myName)
+                identity = "名字"
+                if !isMine {
+                    if self.foreignNames.insert(name).inserted {
+                        self.logEvent("跳过其他车辆 name=\(name) rssi=\(rssi)")
+                    }
+                    return
+                }
+            } else if let known = self.myPeripheralID {
+                isMine = (peripheral.identifier == known)
+                identity = "已记住的外设ID"
+                if !isMine { return }
+            } else {
+                // 后台拿不到名字、也还没记住本车 → 只能赌一次
+                isMine = true
+                identity = "未知（首次，靠配对结果确认）"
+            }
+            guard isMine else { return }
+
             self.lastRSSI = rssi
+            self.lastRSSISource = "\(name.isEmpty ? "无名字" : name)（识别方式：\(identity)）"
             self.scanCount += 1
             self.lastSeenAt = Date()
             // 日志去重：信号没大变就不重复记
@@ -385,7 +435,10 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             self.detail = "发现车辆（信号 \(rssi)dBm）"
 
             // 开了自动解锁且信号够强，就自动安排一次解锁
-            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI {
+            let cooled = self.lastAutoUnlockAt.map { Date().timeIntervalSince($0) >= Self.autoUnlockCooldown } ?? true
+            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI, cooled {
+                self.lastAutoUnlockAt = Date()
+                self.logEvent("安排自动解锁（rssi=\(rssi)，5 分钟内不再重复）")
                 self.pendingAction = { [weak self] in
                     self?.run("自动解锁") { $0.unlock() }
                 }
@@ -494,7 +547,8 @@ private extension TeslaKey {
                 return
             }
             session = s
-            logEvent("会话建立成功")
+            if let p = peripheral { myPeripheralID = p.identifier }
+            logEvent("会话建立成功（已记住本车外设 ID）")
             connected = true
             phase = .ready
             detail = "会话已建立"
