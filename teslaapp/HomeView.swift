@@ -14,6 +14,8 @@ struct HomeView: View {
     @State private var pendingClimate: Bool?
     /// 无钥匙启动二次确认
     @State private var confirmDrive = false
+    /// 离车上锁开关的乐观状态
+    @State private var pendingAutoLock: Bool?
     /// 定位失败提示
     @State private var posAlert: String?
     /// 顶部操作提示（执行中 / 成功 / 失败）
@@ -407,10 +409,11 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: 手机钥匙
+    // MARK: 手机钥匙（两个开关：靠近解锁 BLE / 离车上锁 云端）
 
     private var phoneKeyCard: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 0) {
+            // 状态行
             HStack(spacing: 12) {
                 Image(systemName: "iphone")
                     .font(.system(size: 20, weight: .light))
@@ -427,21 +430,54 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
-            HStack {
-                Text("离车自动上锁").font(.system(size: 12)).foregroundColor(L.sub)
-                Spacer()
-                Toggle("", isOn: Binding(
-                    get: { api.autoLockEnabled },
-                    set: { on in Task { await api.setAutoLock(on) } }
-                ))
-                .labelsHidden()
-                .tint(L.sand)
-                .scaleEffect(0.85)
+            .padding(.bottom, 12)
+
+            Rectangle().fill(L.line).frame(height: 1).padding(.bottom, 10)
+
+            // 靠近自动解锁（手机侧 BLE）
+            toggleRow(title: "靠近自动解锁",
+                      subtitle: "蓝牙 · 约 3 米内",
+                      isOn: ble.autoUnlockEnabled) { on in
+                ble.setAutoUnlock(on)
+            }
+
+            // 离车自动上锁（服务器侧）
+            toggleRow(title: "离车自动上锁",
+                      subtitle: "云端 · 离开约 \(api.recorder?.delaySec ?? 90) 秒",
+                      isOn: pendingAutoLock ?? api.autoLockEnabled) { on in
+                withAnimation(.easeOut(duration: 0.12)) { pendingAutoLock = on }
+                Task {
+                    await api.setAutoLock(on)
+                    try? await Task.sleep(nanoseconds: 600_000_000)
+                    withAnimation(.easeOut(duration: 0.15)) { pendingAutoLock = nil }
+                }
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+    }
+
+    private func toggleRow(title: String, subtitle: String,
+                           isOn: Bool, action: @escaping (Bool) -> Void) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 12.5)).foregroundColor(L.text.opacity(0.9))
+                Text(subtitle).font(.system(size: 9.5)).foregroundColor(L.dim)
+            }
+            Spacer()
+            Toggle("", isOn: Binding(
+                get: { isOn },
+                set: { on in
+                    Haptics.selection()
+                    action(on)
+                }
+            ))
+            .labelsHidden()
+            .tint(L.sand)
+            .scaleEffect(0.8)
+        }
+        .padding(.vertical, 6)
     }
 
     private var bleStatusText: String {
