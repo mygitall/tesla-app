@@ -69,6 +69,7 @@ final class TeslaKey: NSObject, ObservableObject {
     private let keyPEM: String
     private var pumpTask: Task<Void, Never>?
     private var pendingAction: (() -> Void)?     // 连上后要执行的动作
+    private var pendingIsLock = false             // 待执行动作是否为「上锁」（取消时才允许清空）
     private var idleDisconnect: Task<Void, Never>? // 空闲断开计时
 
     /// 全局单例：不依赖登录状态，离线也能自动开关门
@@ -270,6 +271,7 @@ final class TeslaKey: NSObject, ObservableObject {
         }
         lastAutoLockAt = Date()
         logEvent("安排蓝牙上锁（\(reason)）")
+        pendingIsLock = true
         pendingAction = { [weak self] in
             self?.run("自动上锁") { $0.lock() }
         }
@@ -292,7 +294,11 @@ final class TeslaKey: NSObject, ObservableObject {
     private func cancelAutoLock() {
         autoLockTask?.cancel()
         autoLockTask = nil
-        if pendingAction != nil { pendingAction = nil }
+        // 只取消「自动上锁」的待执行动作；解锁/手动指令绝不能被误清
+        if pendingIsLock {
+            pendingAction = nil
+            pendingIsLock = false
+        }
     }
 
     func setAutoUnlock(_ on: Bool) {
@@ -336,6 +342,7 @@ final class TeslaKey: NSObject, ObservableObject {
             return
         }
         // 记下待办动作，然后开始扫描
+        pendingIsLock = false
         pendingAction = { [weak self] in self?.run(label, action) }
         if let p = peripheral, p.state == .connected {
             startSession()
@@ -379,10 +386,11 @@ final class TeslaKey: NSObject, ObservableObject {
     func goBackground() {
         if lastPhaseKey != "bg" { logEvent("App 进入后台"); lastPhaseKey = "bg" }
         cancelIdleDisconnect()
-        if session != nil {
+        // 有会话或有待执行动作（解锁/上锁/手动指令）→ 先让它跑完，别把连接砍掉
+        if session != nil || pendingAction != nil {
             logEvent("后台：等动作完成后再断开")
             idleDisconnect = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: 8_000_000_000)
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
                 guard !Task.isCancelled else { return }
                 await MainActor.run { self?.disconnectNow(reason: "App 在后台") }
             }
@@ -531,23 +539,26 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             peripheral.delegate = self
             self.detail = "发现车辆（信号 \(rssi)dBm）"
 
-            // 开了自动解锁 + 信号够强 + 「刚走近」（不是一直站着） → 解锁
+            // 开了自动解锁 + 信号够强 + 「刚走近」 → 解锁
             let cooled = self.lastAutoUnlockAt.map { Date().timeIntervalSince($0) >= Self.autoUnlockCooldown } ?? true
             let cameNear = self.cameNearFlag
-            self.cameNearFlag = false
-            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI, cameNear, cooled {
-                self.lastAutoUnlockAt = Date()
-                self.logEvent("安排自动解锁（rssi=\(rssi)，来自「远→近」跨越）")
-                self.pendingAction = { [weak self] in
-                    self?.run("自动解锁") { $0.unlock() }
+            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI, cameNear {
+                if cooled {
+                    self.cameNearFlag = false
+                    self.pendingIsLock = false
+                    self.lastAutoUnlockAt = Date()
+                    self.logEvent("安排自动解锁（rssi=\(rssi)，来自「远→近」跨越）")
+                    self.pendingAction = { [weak self] in
+                        self?.run("自动解锁") { $0.unlock() }
+                    }
+                    self.detail = "检测到车辆（\(rssi)dBm），自动解锁中…"
+                } else {
+                    // 冷却未过：保留 cameNearFlag，扫描每 4 秒重启会自动重试
+                    let left = Self.autoUnlockCooldown - Date().timeIntervalSince(self.lastAutoUnlockAt ?? Date())
+                    self.logEvent("冷却中（还需 \(Int(max(0,left))) 秒），到时自动重试解锁")
                 }
-                self.detail = "检测到车辆（\(rssi)dBm），自动解锁中…"
-            }
-
-            if !self.cameNearFlag, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI,
-               self.pendingAction == nil, !cooled {
-                let left = Self.autoUnlockCooldown - Date().timeIntervalSince(self.lastAutoUnlockAt ?? Date())
-                self.logEvent("跳过自动解锁：冷却中（还需 \(Int(max(0,left))) 秒）")
+            } else {
+                self.cameNearFlag = false
             }
 
             // 没有待执行动作就【不连接】——避免后台挂着蓝牙把车拖醒
@@ -670,6 +681,7 @@ private extension TeslaKey {
             // 关键顺序：先加密握手，再执行排队动作（官方 CLI 也是 Connect→StartSession→发命令）
             let act = pendingAction
             pendingAction = nil
+            pendingIsLock = false
             Task {
                 let ok = await Task.detached(priority: .userInitiated) { s.connect() }.value
                 logEvent(ok ? "会话握手完成" : "会话握手失败：\(s.lastError())")
