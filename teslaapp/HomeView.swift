@@ -10,6 +10,10 @@ struct HomeView: View {
     @State private var showBleLog = false
     /// 乐观锁状态：点下去立刻切换视觉，等服务器确认后清空
     @State private var pendingLock: Bool?
+    /// 乐观空调状态
+    @State private var pendingClimate: Bool?
+    /// 无钥匙启动二次确认
+    @State private var confirmDrive = false
     /// 定位失败提示
     @State private var posAlert: String?
     /// 顶部操作提示（执行中 / 成功 / 失败）
@@ -21,6 +25,7 @@ struct HomeView: View {
 
     /// 优先用本地乐观状态，避免等网络
     private var isLocked: Bool { pendingLock ?? (s?.locked ?? true) }
+    private var isClimateOn: Bool { pendingClimate ?? (s?.climateOn ?? false) }
     private var isCharging: Bool { (s?.charging ?? "").lowercased() == "charging" }
 
     // 实测色板
@@ -76,6 +81,15 @@ struct HomeView: View {
         }
         .onChange(of: api.errorText) { err in
             if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true) }
+        }
+        .confirmationDialog("无钥匙启动", isPresented: $confirmDrive, titleVisibility: .visible) {
+            Button("确认启动（2 分钟内可驾驶）", role: .destructive) {
+                Haptics.tap()
+                Task { await api.command("drive", label: "无钥匙启动") }
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("启动后 2 分钟内车辆可被直接开走，请确认你已在车旁。")
         }
         .sheet(isPresented: $showSettings) { SettingsSheet(api: api) }
         .sheet(isPresented: $showBleLog) { BleLogSheet(ble: ble) }
@@ -254,91 +268,103 @@ struct HomeView: View {
 
     private var actionRow: some View {
         HStack(spacing: 10) {
-            // 显示「当前状态」：解锁中 → 解锁图标+文字；已上锁 → 上锁图标+文字
-            // 点击执行相反的操作
-            lockButton
-            actionButton(title: "启动", icon: "key") {
-                Task { await api.command("drive", label: "无钥匙启动") }
-            }
-            actionButton(title: "空调", icon: "fanblades",
-                         active: s?.climateOn == true) {
-                let on = s?.climateOn ?? false
-                Task { await api.command(on ? "climate-off" : "climate-on", label: on ? "关空调" : "开空调") }
-            }
-            actionButton(title: "定位", icon: "location") {
-                openCarInMaps()
-            }
-        }
-    }
-
-    /// 锁按钮：图标/文字反映「当前状态」，点击立刻切换（乐观更新）
-    private var lockButton: some View {
-        let unlocked = !isLocked
-        return Button {
-            guard !api.busy else { return }     // 正在执行就不响应，避免状态错乱
-            Haptics.toggle()                    // 点击立刻震动
-            let target = !isLocked              // 目标状态 = 当前状态取反
-            // ① 立刻翻转视觉
-            withAnimation(.easeOut(duration: 0.12)) { pendingLock = target }
-            Task {
-                await api.command(target ? "lock" : "unlock", label: target ? "上锁" : "解锁")
-                // ② 失败 → 立刻回滚
-                if api.actionIsError {
-                    Haptics.error()
+            // 锁：显示当前状态，点击取反
+            Button {
+                guard !api.busy else { return }
+                Haptics.toggle()
+                let target = !isLocked
+                withAnimation(.easeOut(duration: 0.12)) { pendingLock = target }
+                Task {
+                    await api.command(target ? "lock" : "unlock", label: target ? "上锁" : "解锁")
+                    if api.actionIsError {
+                        Haptics.error()
+                        withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
+                        return
+                    }
+                    Haptics.success()
+                    await api.refresh()
+                    try? await Task.sleep(nanoseconds: 800_000_000)
                     withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
-                    return
                 }
-                Haptics.success()
-                // ③ 成功 → 刷新真实状态后交回服务器
-                await api.refresh()
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                withAnimation(.easeOut(duration: 0.15)) { pendingLock = nil }
+            } label: {
+                actionLabel(title: isLocked ? "上锁" : "解锁",
+                            icon: isLocked ? "lock" : "lock.open",
+                            active: !isLocked, enabled: !api.busy)
             }
-        } label: {
-            VStack(spacing: 9) {
-                ZStack {
-                    Circle()
-                        .stroke(unlocked ? L.sand : L.text.opacity(0.45), lineWidth: 1)
-                        .frame(width: 38, height: 38)
-                    Image(systemName: unlocked ? "lock.open" : "lock")
-                        .font(.system(size: 15, weight: .light))
-                        .foregroundColor(unlocked ? L.sand : L.text.opacity(0.9))
+            .buttonStyle(.plain)
+            .disabled(api.busy)
+
+            // 启动：需要二次确认
+            Button {
+                guard !api.busy else { return }
+                Haptics.tap()
+                confirmDrive = true
+            } label: {
+                actionLabel(title: "启动", icon: "key", active: false, enabled: !api.busy)
+            }
+            .buttonStyle(.plain)
+            .disabled(api.busy)
+
+            // 空调：乐观更新
+            Button {
+                guard !api.busy else { return }
+                Haptics.toggle()
+                let target = !isClimateOn
+                withAnimation(.easeOut(duration: 0.12)) { pendingClimate = target }
+                Task {
+                    await api.command(target ? "climate-on" : "climate-off",
+                                      label: target ? "开空调" : "关空调")
+                    if api.actionIsError {
+                        Haptics.error()
+                        withAnimation(.easeOut(duration: 0.15)) { pendingClimate = nil }
+                        return
+                    }
+                    Haptics.success()
+                    await api.refresh()
+                    try? await Task.sleep(nanoseconds: 800_000_000)
+                    withAnimation(.easeOut(duration: 0.15)) { pendingClimate = nil }
                 }
-                Text(unlocked ? "解锁" : "上锁")
-                    .font(.system(size: 11))
-                    .foregroundColor(unlocked ? L.sand : L.text.opacity(0.85))
+            } label: {
+                actionLabel(title: "空调", icon: "fanblades",
+                            active: isClimateOn, enabled: !api.busy)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
-            .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+            .buttonStyle(.plain)
+            .disabled(api.busy)
+
+            // 定位：本地操作，不受 busy 影响
+            Button {
+                Haptics.tap()
+                openCarInMaps()
+            } label: {
+                actionLabel(title: "定位", icon: "location", active: false, enabled: true)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 
-    private func actionButton(title: String, icon: String, active: Bool = false, tap: @escaping () -> Void) -> some View {
-        Button {
-            Haptics.tap()
-            tap()
-        } label: {
-            VStack(spacing: 9) {
-                ZStack {
-                    Circle()
-                        .stroke(active ? L.sand : L.text.opacity(0.45), lineWidth: 1)
-                        .frame(width: 38, height: 38)
-                    Image(systemName: icon)
-                        .font(.system(size: 15, weight: .light))
-                        .foregroundColor(active ? L.sand : L.text.opacity(0.9))
-                }
-                Text(title)
-                    .font(.system(size: 11))
-                    .foregroundColor(L.text.opacity(0.85))
+    /// 统一的按钮外观（执行中会变暗 + 缩小）
+    private func actionLabel(title: String, icon: String, active: Bool, enabled: Bool) -> some View {
+        VStack(spacing: 9) {
+            ZStack {
+                Circle()
+                    .stroke(active ? L.sand : L.text.opacity(0.45), lineWidth: 1)
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundColor(active ? L.sand : L.text.opacity(0.9))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
-            .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+            Text(title)
+                .font(.system(size: 11))
+                .foregroundColor(active ? L.sand : L.text.opacity(0.85))
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 11)
+        .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+        .opacity(enabled ? 1 : 0.45)
+        .scaleEffect(enabled ? 1 : 0.97)
+        .animation(.easeOut(duration: 0.15), value: enabled)
     }
+
 
     // MARK: 充电卡
 
