@@ -44,6 +44,11 @@ final class TeslaKey: NSObject, ObservableObject {
     private var autoLockTask: Task<Void, Never>?
     /// 本次断开是不是 App 主动发起的（后台/空闲），主动断开不能触发上锁
     private var intentionalDisconnect = false
+    /// 连接重试（iOS 后台连接经常会超时，需要自动重试）
+    private var connectRetries = 0
+    private var lastRetryAt: Date?
+    private var retryTask: Task<Void, Never>?
+    private var isBackgrounded = false
     static let autoUnlockCooldown: TimeInterval = 45      // 只防抖，不防「离开再回来」
     @Published var scanCount = 0          // 扫到过几次
     @Published var events: [String] = []   // 蓝牙事件日志（持久化）
@@ -121,6 +126,7 @@ final class TeslaKey: NSObject, ObservableObject {
 
     /// 回到前台：复位「在车边」状态，让第一次强信号被当作「刚走近」→ 可以解锁
     func appForegrounded() {
+        isBackgrounded = false
         wasNear = false
         cameNearFlag = false
         start()
@@ -291,6 +297,28 @@ final class TeslaKey: NSObject, ObservableObject {
         }
     }
 
+    /// 连接中断/失败且还有待执行动作 → 自动重试（最多 3 次）
+    private func scheduleConnectRetry() {
+        let now = Date()
+        if let last = lastRetryAt, now.timeIntervalSince(last) < 2 { return }
+        lastRetryAt = now
+        connectRetries += 1
+        if connectRetries > 3 {
+            logEvent("连接重试已达 3 次，放弃（仍可手动点按钮执行）")
+            return
+        }
+        logEvent("连接中断，3 秒后自动重试（第 \(connectRetries) 次）")
+        retryTask?.cancel()
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self else { return }
+                if self.autoUnlockEnabled || self.pendingIsLock { self.beginScan() }
+            }
+        }
+    }
+
     private func cancelAutoLock() {
         autoLockTask?.cancel()
         autoLockTask = nil
@@ -384,6 +412,8 @@ final class TeslaKey: NSObject, ObservableObject {
 
     /// App 进入后台：断开连接；但如果开了自动解锁，保持被动扫描
     func goBackground() {
+        if isBackgrounded, session == nil, pendingAction == nil { return }   // 已在后台且无事可做
+        isBackgrounded = true
         if lastPhaseKey != "bg" { logEvent("App 进入后台"); lastPhaseKey = "bg" }
         cancelIdleDisconnect()
         // 有会话或有待执行动作（解锁/上锁/手动指令）→ 先让它跑完，别把连接砍掉
@@ -590,6 +620,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
     nonisolated func centralManager(_ central: CBCentralManager,
                                     didConnect peripheral: CBPeripheral) {
         Task { @MainActor in
+            self.connectRetries = 0
             self.logEvent("已连接，发现服务")
             self.phase = .connecting
             peripheral.discoverServices([Self.serviceUUID])
@@ -605,6 +636,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
                 self.logEvent("断开是 App 主动发起的，不触发离车上锁")
             } else {
                 self.evaluateBleAutoLockOnDisconnect()
+                if self.pendingAction != nil { self.scheduleConnectRetry() }
             }
         }
         Task { @MainActor in
@@ -621,6 +653,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             self.logEvent("连接失败：\(error?.localizedDescription ?? "未知")")
             self.phase = .failed
             self.detail = "连接失败：\(error?.localizedDescription ?? "未知")"
+            if self.pendingAction != nil { self.scheduleConnectRetry() }
         }
     }
 
