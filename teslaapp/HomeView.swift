@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var toast: ToastInfo?
     /// 前台自动刷新定时器
     @State private var autoTimer: Timer?
+    @State private var lastWakePing: Date?
 
     private var s: VehicleSummary? { api.summary }
 
@@ -70,6 +71,13 @@ struct HomeView: View {
             } else {
                 ble.goBackground()
                 stopAutoRefresh()
+            }
+        }
+        .onChange(of: ble.connected) { on in
+            // 蓝牙连上车辆 = 人就在车边，通知服务器开始高频采集
+            if on {
+                Task { await api.wakeRecorder() }
+                lastWakePing = Date()
             }
         }
         .onChange(of: api.busy) { busy in

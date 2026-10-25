@@ -599,6 +599,14 @@ final class TeslaAPI: ObservableObject {
         }
     }
 
+    /// 通知服务器进入高频采集（App 蓝牙连上车辆时调用），避免漏记短途
+    func wakeRecorder(seconds: Int = 900) async {
+        var req = URLRequest(url: url("/api/recorder/wake?sec=\(seconds)"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 12
+        _ = try? await session.data(for: req)
+    }
+
     /// 充电曲线（不传时间则取最近一次充电）
     func loadChargeCurve(start: Int? = nil, end: Int? = nil) async -> [ChargeCurvePoint] {
         var path = "/api/charge/curve"
