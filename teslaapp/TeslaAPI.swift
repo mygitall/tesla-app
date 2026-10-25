@@ -263,6 +263,8 @@ final class TeslaAPI: ObservableObject {
 
     @Published var summary: VehicleSummary? = TeslaAPI.cachedSummary()
     @Published var loading = false
+    /// 最后一次成功刷新的本地时间
+    @Published var lastRefreshAt: Date?
     @Published var errorText: String?
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
@@ -487,6 +489,7 @@ final class TeslaAPI: ObservableObject {
         do {
             let s: VehicleSummary = try await get("/api/app/summary", timeout: 55)
             summary = s
+            lastRefreshAt = Date()
             saveSummaryCache(s)
             if s.dataError != nil {
                 errorText = "车辆数据读取失败，稍后再试"

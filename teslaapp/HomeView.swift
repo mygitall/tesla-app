@@ -14,6 +14,8 @@ struct HomeView: View {
     @State private var posAlert: String?
     /// 顶部操作提示（执行中 / 成功 / 失败）
     @State private var toast: ToastInfo?
+    /// 前台自动刷新定时器
+    @State private var autoTimer: Timer?
 
     private var s: VehicleSummary? { api.summary }
 
@@ -52,9 +54,18 @@ struct HomeView: View {
         .task {
             ble.start()
             if api.summary == nil { await api.refresh() }
+            startAutoRefresh()
         }
         .onChange(of: scenePhase) { phase in
-            if phase != .active { ble.goBackground() }
+            if phase == .active {
+                // 回到前台：立刻刷一次，并恢复 30 秒定时刷新
+                ble.start()
+                Task { if !api.busy { await api.refresh() } }
+                startAutoRefresh()
+            } else {
+                ble.goBackground()
+                stopAutoRefresh()
+            }
         }
         .onChange(of: api.busy) { busy in
             if busy {
@@ -106,6 +117,12 @@ struct HomeView: View {
                 Text("特斯拉 Model Y 标准续航版")
                     .font(.system(size: 11))
                     .foregroundColor(L.sub)
+                if let t = api.lastRefreshAt {
+                    Text("更新于 \(timeText(t))")
+                        .font(.system(size: 9.5))
+                        .foregroundColor(L.dim)
+                        .monospacedDigit()
+                }
             }
             Spacer()
             Button { showSettings = true } label: {
@@ -398,9 +415,32 @@ struct HomeView: View {
 
     // MARK: 工具
 
+    private func timeText(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f.string(from: d)
+    }
+
     private func durText(_ minutes: Int?) -> String {
         let m = minutes ?? 0
         return String(format: "%d:%02d", m / 60, m % 60)
+    }
+
+    // MARK: 自动刷新
+
+    /// 前台每 30 秒刷新一次；命令执行中或后台时跳过
+    private func startAutoRefresh() {
+        stopAutoRefresh()
+        autoTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
+            guard !api.busy else { return }      // 命令执行时不打扰
+            Task { await api.refresh() }
+        }
+        autoTimer?.tolerance = 5
+    }
+
+    private func stopAutoRefresh() {
+        autoTimer?.invalidate()
+        autoTimer = nil
     }
 
     // MARK: 顶部提示条
