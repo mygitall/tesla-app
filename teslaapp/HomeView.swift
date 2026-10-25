@@ -46,7 +46,7 @@ struct HomeView: View {
                         actionRow
                         chargingCard
                         phoneKeyCard
-                        Color.clear.frame(height: 96)
+                        Color.clear.frame(height: 180)   // 底部留白：让最后一张卡能滚到标签栏之上
                     }
                     .padding(.horizontal, hPad)
                     .padding(.top, 80)
