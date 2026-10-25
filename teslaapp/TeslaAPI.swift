@@ -599,6 +599,14 @@ final class TeslaAPI: ObservableObject {
         }
     }
 
+    /// 告诉服务器「手机就在车边」：抑制离车自动锁 + 保持高频采集
+    func presence(seconds: Int = 600) async {
+        var req = URLRequest(url: url("/api/recorder/presence?sec=\(seconds)"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 12
+        _ = try? await session.data(for: req)
+    }
+
     /// 通知服务器进入高频采集（App 蓝牙连上车辆时调用），避免漏记短途
     func wakeRecorder(seconds: Int = 900) async {
         var req = URLRequest(url: url("/api/recorder/wake?sec=\(seconds)"))
