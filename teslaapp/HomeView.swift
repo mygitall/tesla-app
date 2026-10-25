@@ -66,8 +66,8 @@ struct HomeView: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
-                // 回到前台：立刻刷一次，并恢复 30 秒定时刷新
-                ble.start()
+                // 回到前台：复位在场判定 + 立刻刷一次 + 恢复定时刷新
+                ble.appForegrounded()
                 Task { if !api.busy { await api.refresh() } }
                 startAutoRefresh()
             } else {

@@ -42,6 +42,8 @@ final class TeslaKey: NSObject, ObservableObject {
     private var farSince: Date?           // 变远开始计时
     private var lastAutoLockAt: Date?     // 上锁冷却
     private var autoLockTask: Task<Void, Never>?
+    /// 本次断开是不是 App 主动发起的（后台/空闲），主动断开不能触发上锁
+    private var intentionalDisconnect = false
     static let autoUnlockCooldown: TimeInterval = 45      // 只防抖，不防「离开再回来」
     @Published var scanCount = 0          // 扫到过几次
     @Published var events: [String] = []   // 蓝牙事件日志（持久化）
@@ -115,6 +117,13 @@ final class TeslaKey: NSObject, ObservableObject {
     }
 
     // MARK: 启动
+
+    /// 回到前台：复位「在车边」状态，让第一次强信号被当作「刚走近」→ 可以解锁
+    func appForegrounded() {
+        wasNear = false
+        cameNearFlag = false
+        start()
+    }
 
     func start() {
         guard central == nil else {
@@ -255,6 +264,10 @@ final class TeslaKey: NSObject, ObservableObject {
     }
 
     private func scheduleBleLock(reason: String) {
+        if let u = lastAutoUnlockAt, Date().timeIntervalSince(u) < 120 {
+            logEvent("跳过蓝牙上锁：刚解锁 \(Int(Date().timeIntervalSince(u))) 秒")
+            return
+        }
         lastAutoLockAt = Date()
         logEvent("安排蓝牙上锁（\(reason)）")
         pendingAction = { [weak self] in
@@ -347,6 +360,7 @@ final class TeslaKey: NSObject, ObservableObject {
 
     /// 主动断开蓝牙连接
     func disconnectNow(reason: String) {
+        intentionalDisconnect = true
         cancelIdleDisconnect()
         pumpTask?.cancel(); pumpTask = nil
         if let p = peripheral { central?.cancelPeripheralConnection(p) }
@@ -574,7 +588,14 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
     nonisolated func centralManager(_ central: CBCentralManager,
                                     didDisconnectPeripheral peripheral: CBPeripheral,
                                     error: Error?) {
-        Task { @MainActor in self.evaluateBleAutoLockOnDisconnect() }
+        Task { @MainActor in
+            if self.intentionalDisconnect {
+                self.intentionalDisconnect = false
+                self.logEvent("断开是 App 主动发起的，不触发离车上锁")
+            } else {
+                self.evaluateBleAutoLockOnDisconnect()
+            }
+        }
         Task { @MainActor in
             self.logEvent("连接已断开\(error.map { "：\($0.localizedDescription)" } ?? "")")
             self.connected = false
