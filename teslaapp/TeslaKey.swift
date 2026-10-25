@@ -91,6 +91,13 @@ final class TeslaKey: NSObject, ObservableObject {
     }
 
     /// 记录一条蓝牙事件（会持久化，App 被系统杀掉也不丢）
+    /// 清空事件日志
+    func clearLog() {
+        events.removeAll()
+        UserDefaults.standard.removeObject(forKey: "bleEvents")
+        logEvent("日志已清空")
+    }
+
     func logEvent(_ text: String) {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss"

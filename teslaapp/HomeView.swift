@@ -589,6 +589,7 @@ struct BleLogSheet: View {
     @ObservedObject var ble: TeslaKey
     @Environment(\.presentationMode) var pm
     @State private var copied = false
+    @State private var showClearConfirm = false
 
     var body: some View {
         NavigationView {
@@ -614,6 +615,15 @@ struct BleLogSheet: View {
                     .padding(16)
                 }
             }
+            .confirmationDialog("清空日志？", isPresented: $showClearConfirm, titleVisibility: .visible) {
+                Button("清空", role: .destructive) {
+                    ble.clearLog()
+                    copied = false
+                }
+                Button("取消", role: .cancel) { }
+            } message: {
+                Text("会删除所有历史记录，不影响配对和钥匙功能。")
+            }
             .navigationTitle("手机钥匙日志")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -621,9 +631,14 @@ struct BleLogSheet: View {
                     Button("关闭") { pm.wrappedValue.dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(copied ? "已复制" : "复制") {
-                        UIPasteboard.general.string = ble.exportLog()
-                        copied = true
+                    HStack(spacing: 14) {
+                        Button(copied ? "已复制" : "复制") {
+                            UIPasteboard.general.string = ble.exportLog()
+                            copied = true
+                        }
+                        Button("清空", role: .destructive) {
+                            showClearConfirm = true
+                        }
                     }
                 }
             }
