@@ -37,11 +37,12 @@ final class TeslaKey: NSObject, ObservableObject {
     /// 蓝牙离车上锁（手机侧执行，比云端快）
     @Published var autoLockEnabled: Bool =
         (UserDefaults.standard.object(forKey: "bleAutoLock") as? Bool) ?? true
-    private var wasNear = false           // 是否曾经靠得很近
+    private var wasNear = false           // 当前是否在车边（信号够强）
+    private var cameNearFlag = false      // 本轮是否发生了「远→近」跨越
     private var farSince: Date?           // 变远开始计时
     private var lastAutoLockAt: Date?     // 上锁冷却
     private var autoLockTask: Task<Void, Never>?
-    static let autoUnlockCooldown: TimeInterval = 300
+    static let autoUnlockCooldown: TimeInterval = 45      // 只防抖，不防「离开再回来」
     @Published var scanCount = 0          // 扫到过几次
     @Published var events: [String] = []   // 蓝牙事件日志（持久化）
     @Published var centralStateRaw: Int = -1
@@ -224,7 +225,10 @@ final class TeslaKey: NSObject, ObservableObject {
             cancelAutoLock()
             return
         }
-        guard wasNear, rssi <= -85 else { return }
+        guard wasNear, rssi <= -85 else {
+            if rssi <= -85 { wasNear = false }   // 走远 → 复位，下次靠近可再触发
+            return
+        }
         if farSince == nil {
             farSince = Date()
             logEvent("信号变弱（\(rssi)dBm），15 秒后若仍未靠近则上锁")
@@ -490,6 +494,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             }
             guard isMine else { return }
 
+            if !self.wasNear, rssi >= Self.autoUnlockRSSI { self.cameNearFlag = true }
             self.evaluateBleAutoLock(rssi: rssi)
             self.lastRSSI = rssi
             self.lastRSSISource = "\(name.isEmpty ? "无名字" : name)（识别方式：\(identity)）"
@@ -505,15 +510,23 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             peripheral.delegate = self
             self.detail = "发现车辆（信号 \(rssi)dBm）"
 
-            // 开了自动解锁且信号够强，就自动安排一次解锁
+            // 开了自动解锁 + 信号够强 + 「刚走近」（不是一直站着） → 解锁
             let cooled = self.lastAutoUnlockAt.map { Date().timeIntervalSince($0) >= Self.autoUnlockCooldown } ?? true
-            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI, cooled {
+            let cameNear = self.cameNearFlag
+            self.cameNearFlag = false
+            if self.pendingAction == nil, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI, cameNear, cooled {
                 self.lastAutoUnlockAt = Date()
-                self.logEvent("安排自动解锁（rssi=\(rssi)，5 分钟内不再重复）")
+                self.logEvent("安排自动解锁（rssi=\(rssi)，来自「远→近」跨越）")
                 self.pendingAction = { [weak self] in
                     self?.run("自动解锁") { $0.unlock() }
                 }
                 self.detail = "检测到车辆（\(rssi)dBm），自动解锁中…"
+            }
+
+            if !self.cameNearFlag, self.autoUnlockEnabled, rssi >= Self.autoUnlockRSSI,
+               self.pendingAction == nil, !cooled {
+                let left = Self.autoUnlockCooldown - Date().timeIntervalSince(self.lastAutoUnlockAt ?? Date())
+                self.logEvent("跳过自动解锁：冷却中（还需 \(Int(max(0,left))) 秒）")
             }
 
             // 没有待执行动作就【不连接】——避免后台挂着蓝牙把车拖醒
