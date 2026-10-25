@@ -34,6 +34,13 @@ final class TeslaKey: NSObject, ObservableObject {
     private var foreignNames = Set<String>()
     /// 上次自动解锁时间（冷却，避免反复解锁）
     private var lastAutoUnlockAt: Date?
+    /// 蓝牙离车上锁（手机侧执行，比云端快）
+    @Published var autoLockEnabled: Bool =
+        (UserDefaults.standard.object(forKey: "bleAutoLock") as? Bool) ?? true
+    private var wasNear = false           // 是否曾经靠得很近
+    private var farSince: Date?           // 变远开始计时
+    private var lastAutoLockAt: Date?     // 上锁冷却
+    private var autoLockTask: Task<Void, Never>?
     static let autoUnlockCooldown: TimeInterval = 300
     @Published var scanCount = 0          // 扫到过几次
     @Published var events: [String] = []   // 蓝牙事件日志（持久化）
@@ -201,6 +208,69 @@ final class TeslaKey: NSObject, ObservableObject {
     }
 
     /// 打开/关闭「走近自动解锁」
+    func setAutoLock(_ on: Bool) {
+        autoLockEnabled = on
+        UserDefaults.standard.set(on, forKey: "bleAutoLock")
+        logEvent("蓝牙离车上锁：\(on ? "开" : "关")")
+        if !on { cancelAutoLock() }
+    }
+
+    /// 每次扫到本车时评估：走远了就安排 BLE 上锁
+    private func evaluateBleAutoLock(rssi: Int) {
+        guard autoLockEnabled else { return }
+        if rssi >= -75 {
+            wasNear = true
+            farSince = nil
+            cancelAutoLock()
+            return
+        }
+        guard wasNear, rssi <= -85 else { return }
+        if farSince == nil {
+            farSince = Date()
+            logEvent("信号变弱（\(rssi)dBm），15 秒后若仍未靠近则上锁")
+        }
+        guard let since = farSince, Date().timeIntervalSince(since) >= 15 else { return }
+        guard autoLockTask == nil else { return }
+        if let t = lastAutoLockAt, Date().timeIntervalSince(t) < 300 { return }
+        scheduleBleLock(reason: "走远 \(rssi)dBm")
+    }
+
+    /// 蓝牙断开也视为离开
+    private func evaluateBleAutoLockOnDisconnect() {
+        guard autoLockEnabled, wasNear else { return }
+        guard autoLockTask == nil else { return }
+        if let t = lastAutoLockAt, Date().timeIntervalSince(t) < 300 { return }
+        scheduleBleLock(reason: "蓝牙断开")
+    }
+
+    private func scheduleBleLock(reason: String) {
+        lastAutoLockAt = Date()
+        logEvent("安排蓝牙上锁（\(reason)）")
+        pendingAction = { [weak self] in
+            self?.run("自动上锁") { $0.lock() }
+        }
+        if let p = peripheral {
+            autoLockTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard let self else { return }
+                    self.central?.stopScan()
+                    self.phase = .connecting
+                    self.logEvent("发起连接（上锁）rssi=\(self.lastRSSI)")
+                    self.central?.connect(p, options: nil)
+                    self.autoLockTask = nil
+                }
+            }
+        }
+    }
+
+    private func cancelAutoLock() {
+        autoLockTask?.cancel()
+        autoLockTask = nil
+        if pendingAction != nil { pendingAction = nil }
+    }
+
     func setAutoUnlock(_ on: Bool) {
         lastPhaseKey = "fg"
         autoUnlockEnabled = on
@@ -420,6 +490,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
             }
             guard isMine else { return }
 
+            self.evaluateBleAutoLock(rssi: rssi)
             self.lastRSSI = rssi
             self.lastRSSISource = "\(name.isEmpty ? "无名字" : name)（识别方式：\(identity)）"
             self.scanCount += 1
@@ -483,6 +554,7 @@ extension TeslaKey: CBCentralManagerDelegate, CBPeripheralDelegate {
     nonisolated func centralManager(_ central: CBCentralManager,
                                     didDisconnectPeripheral peripheral: CBPeripheral,
                                     error: Error?) {
+        Task { @MainActor in self.evaluateBleAutoLockOnDisconnect() }
         Task { @MainActor in
             self.logEvent("连接已断开\(error.map { "：\($0.localizedDescription)" } ?? "")")
             self.connected = false

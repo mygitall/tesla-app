@@ -85,6 +85,9 @@ struct HomeView: View {
                 Task { await api.presence(present: false) }
             }
         }
+        .onChange(of: api.autoLockEnabled) { on in
+            ble.autoLockEnabled = on          // 保持两边一致
+        }
         .onChange(of: api.busy) { busy in
             if busy {
                 showToast(api.actionText ?? "执行中…", loading: true)
@@ -443,8 +446,9 @@ struct HomeView: View {
 
             // 离车自动上锁（服务器侧）
             toggleRow(title: "离车自动上锁",
-                      subtitle: "云端 · 离开约 \(api.recorder?.delaySec ?? 90) 秒",
+                      subtitle: "蓝牙即时 + 云端 \(api.recorder?.delaySec ?? 90) 秒兜底",
                       isOn: pendingAutoLock ?? api.autoLockEnabled) { on in
+                ble.setAutoLock(on)                       // 手机侧 BLE 立即生效
                 withAnimation(.easeOut(duration: 0.12)) { pendingAutoLock = on }
                 Task {
                     await api.setAutoLock(on)
