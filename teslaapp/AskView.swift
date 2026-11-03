@@ -158,9 +158,52 @@ struct AskView: View {
         .background(L.bg)
     }
 
+    /// 是否在问"去过哪些城市"
+    private func isCityQuestion(_ q: String) -> Bool {
+        let keys = ["哪些城市", "去过哪", "去了哪", "到过哪", "去过什么城市", "跑了哪些城市", "城市"]
+        return keys.contains { q.contains($0) }
+    }
+
+    /// 用行程坐标反查城市并回答
+    @MainActor
+    private func answerCityQuestion() async {
+        if api.trips.isEmpty { await api.loadTrips() }
+        let trips = api.trips
+        guard !trips.isEmpty else {
+            asking = false
+            history.append(Bubble(mine: false, text: "还没有行程记录，等有几次驾驶后再问我。"))
+            return
+        }
+        CityIndex.shared.cities(from: trips) { counts in
+            Task { @MainActor in
+                self.asking = false
+                guard !counts.isEmpty else {
+                    self.history.append(Bubble(mine: false, text: "行程里还没有可识别的城市（可能是位置数据缺失）。"))
+                    return
+                }
+                let sorted = counts.sorted { $0.value > $1.value }
+                let names = sorted.prefix(6).map { "\($0.key)" }.joined(separator: "、")
+                let span = "\(trips.count) 段行程"
+                self.history.append(Bubble(mine: false,
+                    text: "根据最近 \(span)记录，你去过：\(names)。",
+                    tag: "本地反查"))
+            }
+        }
+    }
+
     private func ask(_ q: String) {
         let question = q.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !asking else { return }
+        // 「去过哪些城市」类问题：本地用行程坐标反查城市，不依赖服务端
+        if isCityQuestion(question) {
+            Haptics.tap()
+            history.append(Bubble(mine: true, text: question))
+            input = ""
+            asking = true
+            Task { await answerCityQuestion() }
+            return
+        }
+
         // 输入太短（比如一个字母）：本地提示，不浪费一次网络/模型调用
         if question.count < 2 {
             Haptics.error()
