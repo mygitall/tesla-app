@@ -84,6 +84,22 @@ struct ChargeCurveResp: Codable {
     var count: Int?
 }
 
+struct ActionRecord: Codable, Identifiable {
+    var id: Int
+    var ts: Int
+    var action: String
+    var label: String?
+    var ok: Bool
+    var detail: String?
+    var source: String?
+}
+
+struct ActionsResp: Codable {
+    var ok: Bool?
+    var actions: [ActionRecord]
+    var hasMore: Bool?
+}
+
 struct BatteryHealth: Codable {
     var ok: Bool?
     var nominalRangeKm: Double?
@@ -292,6 +308,11 @@ final class TeslaAPI: ObservableObject {
     @Published var tripsHasMore = false
     /// 电价（元/度），来自服务器设置
     @Published var electricityPrice: Double?
+    /// 操作历史
+    @Published var actions: [ActionRecord] = []
+    @Published var actionsError: String?
+    @Published var actionsLoading = false
+    @Published var actionsHasMore = false
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
@@ -762,6 +783,27 @@ final class TeslaAPI: ObservableObject {
             chargeError = nil
         } catch {
             chargeError = friendly(error)
+        }
+    }
+
+    /// 操作历史（谁在何时锁车/开空调）
+    func loadActions(append: Bool = false) async {
+        guard !actionsLoading else { return }
+        actionsLoading = true
+        defer { actionsLoading = false }
+        let offset = append ? actions.count : 0
+        do {
+            let r: ActionsResp = try await fetch("/api/actions?limit=50&offset=\(offset)")
+            if append {
+                let known = Set(actions.map { $0.id })
+                actions += r.actions.filter { !known.contains($0.id) }
+            } else {
+                actions = r.actions
+            }
+            actionsHasMore = r.hasMore ?? (r.actions.count >= 50)
+            actionsError = nil
+        } catch {
+            actionsError = friendly(error)
         }
     }
 
