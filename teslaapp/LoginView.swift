@@ -13,6 +13,32 @@ struct LoginView: View {
     @State private var serverText = ""
     @FocusState private var focused: Bool
 
+    /// 一键用内置密钥登录
+    private func quickLogin() {
+        guard !working else { return }
+        errorText = nil
+        working = true
+        Task {
+            do {
+                try await api.keyLogin(AppConfig.accessKey)
+                await MainActor.run {
+                    working = false
+                    Haptics.success()
+                }
+            } catch {
+                await MainActor.run {
+                    working = false
+                    errorText = (error as? APIError).map { friendlyMessage($0) } ?? error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func friendlyMessage(_ e: APIError) -> String {
+        if case let .message(m) = e { return m }
+        return "登录失败，请检查服务器地址或网络"
+    }
+
     private var canSubmit: Bool { !input.isEmpty && !working }
 
     var body: some View {
@@ -95,6 +121,31 @@ struct LoginView: View {
                     .opacity(canSubmit ? 1 : 0.5)
                 }
                 .frame(maxWidth: 340)
+
+                // 一键登录：直接用 App 内置密钥（不用手打）
+                if !AppConfig.accessKey.isEmpty {
+                    Button {
+                        Haptics.tap()
+                        quickLogin()
+                    } label: {
+                        HStack(spacing: 6) {
+                            if working {
+                                ProgressView().scaleEffect(0.7).tint(Theme.bg)
+                            } else {
+                                Image(systemName: "key.fill").font(.app(12))
+                            }
+                            Text(working ? "登录中…" : "一键登录（内置密钥）")
+                                .font(.app(13, .medium))
+                        }
+                        .foregroundColor(Theme.bg)
+                        .frame(maxWidth: 340)
+                        .padding(.vertical, 13)
+                        .background(Capsule().fill(Theme.amber))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(working)
+                    .padding(.top, 12)
+                }
 
                 Text(mode == .key
                      ? "密钥链接在服务器上：/opt/tesla-dash/data/.access-key"
