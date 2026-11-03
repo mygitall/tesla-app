@@ -565,11 +565,37 @@ struct HomeView: View {
     /// 前台每 30 秒刷新一次；命令执行中或后台时跳过
     private func startAutoRefresh() {
         stopAutoRefresh()
-        autoTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
-            guard !api.busy else { return }      // 命令执行时不打扰
-            Task { await api.refresh() }
+        scheduleNextRefresh()
+    }
+
+    /// 连续失败时指数退避：30 → 60 → 120 → 300 秒封顶；成功立刻回到 30 秒
+    private var currentRefreshInterval: TimeInterval {
+        let fails = api.consecutiveRefreshFailures
+        guard fails > 0 else { return 30 }
+        return min(30 * pow(2, Double(min(fails, 4))), 300)
+    }
+
+    private func scheduleNextRefresh() {
+        autoTimer?.invalidate()
+        let interval = currentRefreshInterval
+        autoTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
+            Task { @MainActor in
+                if !api.busy { await api.refresh() }
+                // 蓝牙连着就续一次「在场」信号（抑制自动锁 + 高频采集）
+                if ble.connected {
+                    let near = ble.lastRSSI >= -80
+                    ble.logEvent("在场判定：\(near ? "在场" : "已离开")（rssi=\(ble.lastRSSI)，阈值 -80）")
+                    await api.presence(present: near)
+                } else {
+                    await api.presence(present: false)
+                }
+                if api.consecutiveRefreshFailures > 0 {
+                    ble.logEvent("刷新失败 \(api.consecutiveRefreshFailures) 次，\(Int(currentRefreshInterval)) 秒后重试")
+                }
+                scheduleNextRefresh()
+            }
         }
-        autoTimer?.tolerance = 5
+        autoTimer?.tolerance = min(5, interval * 0.1)
     }
 
     private func stopAutoRefresh() {
@@ -595,6 +621,21 @@ struct HomeView: View {
                         .foregroundColor(L.text)
                         .lineLimit(2)
                     Spacer(minLength: 0)
+                    if t.isError, api.lastFailedCommand != nil {
+                        Button {
+                            Haptics.tap()
+                            toast = nil
+                            Task { await api.retryLastCommand() }
+                        } label: {
+                            Text("重试")
+                                .font(.system(size: 11.5, weight: .medium))
+                                .foregroundColor(L.sand)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Capsule().stroke(L.sand.opacity(0.5), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -620,7 +661,7 @@ struct HomeView: View {
             toast = ToastInfo(text: text, isError: error, loading: loading)
         }
         guard !loading else { return }
-        let delay: Double = error ? 4.5 : 2.2
+        let delay: Double = error ? (api.lastFailedCommand != nil ? 9.0 : 5.0) : 2.2
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             if toast?.text == text {
                 withAnimation(.easeOut(duration: 0.2)) { toast = nil }

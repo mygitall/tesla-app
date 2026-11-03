@@ -313,6 +313,10 @@ final class TeslaAPI: ObservableObject {
     @Published var actionsError: String?
     @Published var actionsLoading = false
     @Published var actionsHasMore = false
+    /// 刷新连续失败次数（用于退避）
+    @Published var consecutiveRefreshFailures = 0
+    /// 最近一次失败的控制指令（用于「重试」按钮）
+    @Published var lastFailedCommand: (action: String, label: String)?
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
@@ -571,6 +575,7 @@ final class TeslaAPI: ObservableObject {
             let s: VehicleSummary = try await get("/api/app/summary", timeout: 55)
             summary = s
             lastRefreshAt = Date()
+            consecutiveRefreshFailures = 0
             if let p = s.electricityPrice { electricityPrice = p }
             saveSummaryCache(s)
             if s.dataError != nil {
@@ -581,8 +586,10 @@ final class TeslaAPI: ObservableObject {
             }
         } catch APIError.unauthorized {
             loggedIn = false
+            consecutiveRefreshFailures += 1
         } catch {
-            errorText = error.localizedDescription
+            errorText = friendly(error)
+            consecutiveRefreshFailures += 1
         }
     }
 
@@ -623,7 +630,9 @@ final class TeslaAPI: ObservableObject {
         do {
             let (data, resp) = try await session.data(for: req)
             guard let http = resp as? HTTPURLResponse else {
-                actionText = "✗ 网络异常"; actionIsError = true; return
+                actionText = "✗ 网络异常"; actionIsError = true
+            lastFailedCommand = (action, label)
+            return
             }
             if http.statusCode == 401 {
                 loggedIn = false
@@ -640,11 +649,20 @@ final class TeslaAPI: ObservableObject {
                 if msg.count > 60 { msg = String(msg.prefix(60)) + "…" }
                 actionText = "✗ \(msg)"
                 actionIsError = true
+                lastFailedCommand = (action, label)
             }
         } catch {
             actionText = "✗ \(error.localizedDescription)"
             actionIsError = true
+            lastFailedCommand = (action, label)
         }
+    }
+
+    /// 重试最近一次失败的控制指令
+    func retryLastCommand() async {
+        guard let c = lastFailedCommand else { return }
+        lastFailedCommand = nil
+        await command(c.action, label: c.label)
     }
 
     // MARK: 设置
