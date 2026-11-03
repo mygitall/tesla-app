@@ -73,10 +73,10 @@ struct SettingsSheet: View {
                         server = "https://www.zhangweiwei.cc"
                     }
                     Button(role: .destructive) {
-                        api.logout()
+                        Task { await api.resetLocalData() }
                         dismiss()
                     } label: {
-                        Text("退出登录")
+                        Text("清除本地数据")
                     }
                 }
 

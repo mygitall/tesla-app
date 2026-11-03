@@ -414,8 +414,7 @@ final class TeslaAPI: ObservableObject {
                 UserDefaults.standard.removeObject(forKey: "accessKey")
                 return legacy
             }
-            // 3) 首次运行写入内置密钥（但用户显式退出后不再自动登录）
-            if UserDefaults.standard.bool(forKey: "didExplicitLogout") { return "" }
+            // 3) 内置密钥：永远自动使用（打开 App 直接进主页面，无感登录）
             if !AppConfig.accessKey.isEmpty {
                 KeychainStore.set(AppConfig.accessKey, for: "accessKey")
                 return AppConfig.accessKey
@@ -650,16 +649,29 @@ final class TeslaAPI: ObservableObject {
         return true
     }
 
-    /// 退出登录：清密钥、清 cookie、清所有离线缓存、清内存状态
-    func logout() {
-        UserDefaults.standard.set(true, forKey: "didExplicitLogout")
-        accessKey = ""                        // 删 Keychain 里的密钥
+    /// 兼容旧调用：清本地数据但保持登录态（不会把用户踢到登录页）
+    /// 清理本地数据并立即用内置密钥重新登录（不打断使用，永远不进登录页）
+    func resetLocalData() async {
+        accessKey = AppConfig.accessKey
         clearAllCaches()
         summary = nil
         lastRefreshAt = nil
         actions = []
         lastFailedCommand = nil
-        loggedIn = false
+        actionText = "本地数据已清除"
+        loggedIn = !accessKey.isEmpty
+        await refresh()
+    }
+
+    /// 兼容旧调用：等同 resetLocalData，不再把用户踢到登录页
+    func logout() {
+        accessKey = AppConfig.accessKey
+        clearAllCaches()
+        summary = nil
+        lastRefreshAt = nil
+        actions = []
+        lastFailedCommand = nil
+        loggedIn = !accessKey.isEmpty
         actionText = nil
     }
 

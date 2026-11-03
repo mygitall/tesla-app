@@ -13,30 +13,24 @@ struct LoginView: View {
     @State private var serverText = ""
     @FocusState private var focused: Bool
 
-    /// 一键用内置密钥登录
-    private func quickLogin() {
-        guard !working else { return }
-        errorText = nil
+    /// 兜底：只要 App 里带着内置密钥，就自动完成登录，用户永远看不到这个页面
+    private func autoLoginIfPossible() {
+        guard !AppConfig.accessKey.isEmpty, !working else {
+            focused = true
+            return
+        }
         working = true
         Task {
+            defer { Task { @MainActor in working = false } }
             do {
                 try await api.keyLogin(AppConfig.accessKey)
-                await MainActor.run {
-                    working = false
-                    Haptics.success()
-                }
             } catch {
                 await MainActor.run {
-                    working = false
-                    errorText = (error as? APIError).map { friendlyMessage($0) } ?? error.localizedDescription
+                    focused = true
+                    errorText = "自动登录失败：\(error.localizedDescription)"
                 }
             }
         }
-    }
-
-    private func friendlyMessage(_ e: APIError) -> String {
-        if case let .message(m) = e { return m }
-        return "登录失败，请检查服务器地址或网络"
     }
 
     private var canSubmit: Bool { !input.isEmpty && !working }
@@ -122,31 +116,6 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: 340)
 
-                // 一键登录：直接用 App 内置密钥（不用手打）
-                if !AppConfig.accessKey.isEmpty {
-                    Button {
-                        Haptics.tap()
-                        quickLogin()
-                    } label: {
-                        HStack(spacing: 6) {
-                            if working {
-                                ProgressView().scaleEffect(0.7).tint(Theme.bg)
-                            } else {
-                                Image(systemName: "key.fill").font(.app(12))
-                            }
-                            Text(working ? "登录中…" : "一键登录（内置密钥）")
-                                .font(.app(13, .medium))
-                        }
-                        .foregroundColor(Theme.bg)
-                        .frame(maxWidth: 340)
-                        .padding(.vertical, 13)
-                        .background(Capsule().fill(Theme.amber))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(working)
-                    .padding(.top, 12)
-                }
-
                 Text(mode == .key
                      ? "密钥链接在服务器上：/opt/tesla-dash/data/.access-key"
                      : "密码是服务器 .env 里的 APP_PASSWORD")
@@ -179,7 +148,9 @@ struct LoginView: View {
             }
             .padding(.horizontal, 26)
         }
-        .onAppear { focused = true }
+        .onAppear {
+            autoLoginIfPossible()
+        }
         .sheet(isPresented: $editServer) {
             ServerEditSheet(api: api, text: $serverText)
         }
