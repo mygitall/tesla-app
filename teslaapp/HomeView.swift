@@ -353,11 +353,69 @@ struct HomeView: View {
 
             // 进度条（光环下方，铺满卡片宽度）
             progressBar
+
+            // 车辆状态：把服务器已经在发、但一直没用的数据显示出来
+            HStack(spacing: 0) {
+                metricTile(icon: "thermometer.medium",
+                           title: "车内",
+                           value: s?.insideTemp.map { String(format: "%.1f°", $0) } ?? "--")
+                dividerLine
+                metricTile(icon: "sun.max",
+                           title: "车外",
+                           value: s?.outsideTemp.map { String(format: "%.0f°", $0) } ?? "--")
+                dividerLine
+                metricTile(icon: "gauge",
+                           title: "总里程",
+                           value: s?.odometerKm.map { formatKm($0) } ?? "--")
+            }
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+    }
+
+    private func statusPill(icon: String, text: String, active: Bool) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon).font(.app(9))
+            Text(text).font(.app(10))
+        }
+        .foregroundColor(active ? L.sand : L.dim)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(active ? L.sand.opacity(0.12) : L.card2))
+    }
+
+    private func metricTile(icon: String, title: String, value: String) -> some View {
+        VStack(spacing: 3) {
+            HStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.app(9))
+                    .foregroundColor(L.dim)
+                Text(title)
+                    .font(.app(9.5))
+                    .foregroundColor(L.dim)
+            }
+            Text(value)
+                .font(.app(12, .medium))
+                .monospacedDigit()
+                .foregroundColor(L.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var dividerLine: some View {
+        Rectangle().fill(L.line).frame(width: 1, height: 22)
+    }
+
+    private func formatKm(_ km: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return (f.string(from: NSNumber(value: km)) ?? "\(km)") + " km"
     }
 
     private var progressBar: some View {
@@ -536,6 +594,22 @@ struct HomeView: View {
                     metric((s?.chargerVoltage ?? 0) > 50 ? "\(Int(s!.chargerVoltage!))" : "—", "电压 V")
                     vDivider
                     metric((s?.chargerCurrent ?? 0) > 0 ? "\(Int(s!.chargerCurrent!))" : "—", "电流 A")
+                }
+
+                // 状态行：充电口 / 空调设定温度 / 预计充满
+                HStack(spacing: 6) {
+                    statusPill(icon: (s?.chargePortOpen ?? false) ? "bolt.car.fill" : "bolt.car",
+                               text: (s?.chargePortOpen ?? false) ? "充电口已开" : "充电口关闭",
+                               active: s?.chargePortOpen ?? false)
+                    if let t = s?.setTemp, s?.climateOn == true {
+                        statusPill(icon: "thermometer.snowflake",
+                                   text: "空调 \(Int(t))°",
+                                   active: true)
+                    }
+                    if let m = s?.minutesToFull, m > 0, (s?.charging ?? "").contains("Charging") {
+                        statusPill(icon: "clock", text: "约 \(m) 分钟充满", active: false)
+                    }
+                    Spacer(minLength: 0)
                 }
             }
             .padding(.horizontal, 20)
