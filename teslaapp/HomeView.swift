@@ -201,15 +201,18 @@ struct HomeView: View {
                         .rotationEffect(.degrees(-90))
                         .animation(.easeOut(duration: 0.6), value: batteryRatio)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 1) {
                         Text("\(s?.battery ?? 0)")
-                            .font(.system(size: 24, weight: .medium))
+                            .font(.system(size: batteryFontSize, weight: .medium))
                             .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                             .foregroundColor(L.text)
                         Text("%")
-                            .font(.system(size: 10, weight: .regular))
+                            .font(.system(size: 9, weight: .regular))
                             .foregroundColor(L.sub)
                     }
+                    .fixedSize()
                 }
                 .frame(width: 54, height: 54)
 
@@ -244,6 +247,14 @@ struct HomeView: View {
             }
         }
         .frame(height: 3)
+    }
+
+    /// 三位数(100%)要用更小字号，否则 54pt 光环里放不下会被截断成 "1…%"
+    private var batteryFontSize: CGFloat {
+        let v = s?.battery ?? 0
+        if v >= 100 { return 17 }
+        if v >= 10 { return 21 }
+        return 24
     }
 
     private var batteryRatio: Double {

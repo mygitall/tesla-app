@@ -31,6 +31,7 @@ struct ChargeDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
                     periodPicker
+                    healthCard
                     heroCard
                     paramGrid
                     ChargeCurveView(
@@ -43,7 +44,6 @@ struct ChargeDetailView: View {
                         onExport: { exportCurve() }
                     )
                     totalsCard
-                    healthCard
                     sessionListCard
                     sourceNote
                     Color.clear.frame(height: 100)
