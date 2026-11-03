@@ -354,6 +354,9 @@ final class TeslaAPI: ObservableObject {
     @Published var consecutiveRefreshFailures = 0
     /// 首次加载是否已完成（用于首屏骨架屏）
     @Published var initialLoadDone = false
+    /// 骨架屏最短展示时长（秒）
+    var skeletonMinimum: Double = 0.7
+    static let launchTime = Date()
     /// 最近一次失败的控制指令（用于「重试」按钮）
     @Published var lastFailedCommand: (action: String, label: String)?
     @Published var actionText: String?
@@ -670,7 +673,10 @@ final class TeslaAPI: ObservableObject {
                 try? FileManager.default.removeItem(at: f)
             }
         }
+        UserDefaults.standard.removeObject(forKey: Self.summaryCacheKey)   // 车况缓存
         CrashLogger.clear()
+        summary = nil
+        lastRefreshAt = nil
         chargeSummary = nil
         trips = []
         tripsTotals = nil
@@ -704,6 +710,11 @@ final class TeslaAPI: ObservableObject {
         } catch {
             errorText = friendly(error)
             consecutiveRefreshFailures += 1
+        }
+        // 骨架屏至少显示 0.7 秒：否则网络快时会一闪而过，微光根本看不到
+        let elapsed = Date().timeIntervalSince(Self.launchTime)
+        if skeletonMinimum > 0, elapsed < skeletonMinimum {
+            try? await Task.sleep(nanoseconds: UInt64((skeletonMinimum - elapsed) * 1_000_000_000))
         }
         initialLoadDone = true
     }
