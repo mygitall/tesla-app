@@ -388,7 +388,15 @@ final class TeslaAPI: ObservableObject {
 
     var baseURLString: String {
         get { UserDefaults.standard.string(forKey: "serverURL") ?? AppConfig.serverURL }
-        set { UserDefaults.standard.set(newValue, forKey: "serverURL") }
+        set {
+            let old = UserDefaults.standard.string(forKey: "serverURL")
+            UserDefaults.standard.set(newValue, forKey: "serverURL")
+            // 换了服务器：清掉旧服务器的会话与缓存，避免串数据
+            if old != newValue {
+                clearAllCaches()
+                loggedIn = false
+            }
+        }
     }
 
     /// 免密密钥（/k/<key>），存在本地；首次运行自动写入内置密钥
@@ -403,7 +411,8 @@ final class TeslaAPI: ObservableObject {
                 UserDefaults.standard.removeObject(forKey: "accessKey")
                 return legacy
             }
-            // 3) 首次运行写入内置密钥
+            // 3) 首次运行写入内置密钥（但用户显式退出后不再自动登录）
+            if UserDefaults.standard.bool(forKey: "didExplicitLogout") { return "" }
             if !AppConfig.accessKey.isEmpty {
                 KeychainStore.set(AppConfig.accessKey, for: "accessKey")
                 return AppConfig.accessKey
@@ -411,8 +420,12 @@ final class TeslaAPI: ObservableObject {
             return ""
         }
         set {
-            if newValue.isEmpty { KeychainStore.delete("accessKey") }
-            else { KeychainStore.set(newValue, for: "accessKey") }
+            if newValue.isEmpty {
+                KeychainStore.delete("accessKey")
+            } else {
+                KeychainStore.set(newValue, for: "accessKey")
+                UserDefaults.standard.set(false, forKey: "didExplicitLogout")
+            }
         }
     }
 
@@ -448,7 +461,7 @@ final class TeslaAPI: ObservableObject {
 
     private func saveDiskCache(_ key: String, _ data: Data) {
         guard let u = cacheURL(key) else { return }
-        try? data.write(to: u, options: .atomic)
+        try? data.write(to: u, options: [.atomic, .completeFileProtection])
     }
 
     private func loadDiskCache(_ key: String) -> Data? {
@@ -634,14 +647,34 @@ final class TeslaAPI: ObservableObject {
         return true
     }
 
+    /// 退出登录：清密钥、清 cookie、清所有离线缓存、清内存状态
     func logout() {
-        HTTPCookieStorage.shared.cookies(for: baseURL)?.forEach {
-            HTTPCookieStorage.shared.deleteCookie($0)
-        }
-        // 保留内置密钥，退出后仍可自动登录
-        loggedIn = false
+        UserDefaults.standard.set(true, forKey: "didExplicitLogout")
+        accessKey = ""                        // 删 Keychain 里的密钥
+        clearAllCaches()
         summary = nil
+        lastRefreshAt = nil
+        actions = []
+        lastFailedCommand = nil
+        loggedIn = false
         actionText = nil
+    }
+
+    /// 清掉本地所有数据（换账号/退出/换服务器时调用）
+    func clearAllCaches() {
+        HTTPCookieStorage.shared.cookies?.forEach { HTTPCookieStorage.shared.deleteCookie($0) }
+        URLCache.shared.removeAllCachedResponses()
+        if let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first,
+           let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+            for f in files where f.lastPathComponent.hasPrefix("cache-") {
+                try? FileManager.default.removeItem(at: f)
+            }
+        }
+        CrashLogger.clear()
+        chargeSummary = nil
+        trips = []
+        tripsTotals = nil
+        batteryHealth = nil
     }
 
     // MARK: 刷新

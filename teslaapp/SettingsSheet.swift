@@ -8,6 +8,7 @@ struct SettingsSheet: View {
     @State private var saved = false
     @State private var priceText = ""
     @State private var priceSaved = false
+    @State private var cleared = false
 
     var body: some View {
         NavigationView {
@@ -50,6 +51,21 @@ struct SettingsSheet: View {
                 } footer: {
                     Text("用于计算充电花费。不同地区/峰谷电价不同，按你的电费单填写。")
                         .font(.app(11))
+                }
+
+                Section {
+                    Button("清除本地缓存") {
+                        api.clearAllCaches()
+                        cleared = true
+                    }
+                    if cleared {
+                        Text("已清除").font(.system(size: 12)).foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("存储")
+                } footer: {
+                    Text("清除离线数据、诊断日志与登录会话，不影响服务器数据。")
+                        .font(.system(size: 11))
                 }
 
                 Section {
