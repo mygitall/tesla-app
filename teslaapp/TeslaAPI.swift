@@ -135,6 +135,7 @@ struct LastLocResp: Codable {
     var ok: Bool?
     var lat: Double?
     var lon: Double?
+    var frame: String?
     var ts: Int?
 }
 
@@ -356,6 +357,7 @@ final class TeslaAPI: ObservableObject {
     @Published var lastLat: Double?
     @Published var lastLon: Double?
     @Published var lastLocTs: Int?
+    @Published var lastLocFrame: String?
     /// 操作历史
     @Published var actions: [ActionRecord] = []
     @Published var actionsError: String?
@@ -994,6 +996,7 @@ final class TeslaAPI: ObservableObject {
         lastLat = la
         lastLon = lo
         lastLocTs = r.ts
+        lastLocFrame = r.frame
     }
 
     /// 操作历史（谁在何时锁车/开空调）

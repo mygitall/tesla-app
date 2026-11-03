@@ -416,7 +416,9 @@ struct HomeView: View {
         let lat = s?.lat ?? api.lastLat
         let lon = s?.lon ?? api.lastLon
         let isStale = (s?.lat == nil)
-        return LocationCard(lat: lat, lon: lon,
+        // 实时坐标来自 summary，是 WGS-84；last 坐标带 frame 标记
+        let useGCJ = isStale && (api.lastLocFrame == "gcj")
+        return LocationCard(lat: lat, lon: lon, isGCJ: useGCJ,
                             staleText: isStale ? staleLocationText : nil) { openCarInMaps() }
     }
 

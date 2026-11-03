@@ -5,12 +5,17 @@ import MapKit
 struct LocationCard: View {
     let lat: Double?
     let lon: Double?
+    /// 传入的坐标是否已经是国内 GCJ-02（车辆上报的 native 坐标就是）
+    var isGCJ: Bool = false
     var staleText: String? = nil
     var onNavigate: () -> Void
 
     private var coord: CLLocationCoordinate2D? {
         guard let lat, let lon, abs(lat) > 0.001, abs(lon) > 0.001 else { return nil }
-        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        // 特斯拉给的是 WGS-84；中国境内 Apple 地图用 GCJ-02，
+        // 不转换会偏移 300~500 米（实测这条记录偏了 477 米）
+        let c = isGCJ ? (lat: lat, lon: lon) : CoordTransform.toGCJ(lat: lat, lon: lon)
+        return CLLocationCoordinate2D(latitude: c.lat, longitude: c.lon)
     }
 
     var body: some View {
