@@ -439,6 +439,35 @@ final class TeslaAPI: ObservableObject {
         URL(string: path, relativeTo: baseURL) ?? baseURL
     }
 
+    // MARK: - 离线缓存（断网时仍能看历史）
+
+    private func cacheURL(_ key: String) -> URL? {
+        guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return nil }
+        return dir.appendingPathComponent("cache-\(key).json")
+    }
+
+    private func saveDiskCache(_ key: String, _ data: Data) {
+        guard let u = cacheURL(key) else { return }
+        try? data.write(to: u, options: .atomic)
+    }
+
+    private func loadDiskCache(_ key: String) -> Data? {
+        guard let u = cacheURL(key), let d = try? Data(contentsOf: u) else { return nil }
+        return d
+    }
+
+    /// 缓存有多旧（用于提示"离线·3 小时前"）
+    func cacheAge(_ key: String) -> String? {
+        guard let u = cacheURL(key),
+              let attrs = try? FileManager.default.attributesOfItem(atPath: u.path),
+              let date = attrs[.modificationDate] as? Date else { return nil }
+        let mins = Int(Date().timeIntervalSince(date) / 60)
+        if mins < 2 { return "刚刚" }
+        if mins < 60 { return "\(mins) 分钟前" }
+        if mins < 1440 { return "\(mins / 60) 小时前" }
+        return "\(mins / 1440) 天前"
+    }
+
     /// 把任意错误翻成给用户看的一句话
     private func friendly(_ error: Error) -> String {
         if let e = error as? APIError {
@@ -460,7 +489,7 @@ final class TeslaAPI: ObservableObject {
     }
 
     /// 统一的 JSON 请求：非 200 也当作错误抛出（之前直接 return，用户什么都看不到）
-    private func fetch<T: Decodable>(_ path: String, timeout: TimeInterval = 25) async throws -> T {
+    private func fetch<T: Decodable>(_ path: String, timeout: TimeInterval = 25, cacheKey: String? = nil) async throws -> T {
         var req = URLRequest(url: url(path))
         req.httpMethod = "GET"
         req.timeoutInterval = timeout
@@ -470,6 +499,7 @@ final class TeslaAPI: ObservableObject {
         guard http.statusCode == 200 else {
             throw APIError.message("服务器返回 \(http.statusCode)")
         }
+        if let key = cacheKey { saveDiskCache(key, data) }
         return try JSONDecoder().decode(T.self, from: data)
     }
 
@@ -727,7 +757,7 @@ final class TeslaAPI: ObservableObject {
         defer { tripsLoading = false }
         let offset = append ? trips.count : 0
         do {
-            let r: TripsResp = try await fetch("/api/trips?limit=50&offset=\(offset)")
+            let r: TripsResp = try await fetch("/api/trips?limit=50&offset=\(offset)", cacheKey: offset == 0 ? "trips" : nil)
             if append {
                 // 去重（避免服务器有新行程导致 offset 漂移）
                 let known = Set(trips.map { $0.id })
@@ -739,7 +769,14 @@ final class TeslaAPI: ObservableObject {
             tripsHasMore = r.trips.count >= 50
             tripsError = nil
         } catch {
-            tripsError = friendly(error)
+            if !append, let d = loadDiskCache("trips"),
+               let r = try? JSONDecoder().decode(TripsResp.self, from: d) {
+                trips = r.trips
+                tripsTotals = r.totals
+                tripsError = "离线 · 显示 \(cacheAge("trips") ?? "缓存")的行程"
+            } else {
+                tripsError = friendly(error)
+            }
         }
     }
 
@@ -820,10 +857,16 @@ final class TeslaAPI: ObservableObject {
         chargeLoading = true
         defer { chargeLoading = false }
         do {
-            chargeSummary = try await fetch("/api/charge/summary?range=all", timeout: 40)
+            chargeSummary = try await fetch("/api/charge/summary?range=all", timeout: 40, cacheKey: "charge-summary")
             chargeError = nil
         } catch {
-            chargeError = friendly(error)
+            if let d = loadDiskCache("charge-summary"),
+               let sum = try? JSONDecoder().decode(ChargeSummaryResp.self, from: d) {
+                chargeSummary = sum
+                chargeError = "离线 · 显示 \(cacheAge("charge-summary") ?? "缓存")的数据"
+            } else {
+                chargeError = friendly(error)
+            }
         }
     }
 
@@ -849,7 +892,7 @@ final class TeslaAPI: ObservableObject {
         var path = "/api/charge/summary?year=\(year)"
         if let month { path += "&month=\(month)" }
         do {
-            chargeSummary = try await fetch(path)
+            chargeSummary = try await fetch(path, cacheKey: month == nil ? "charge-summary" : nil)
             chargeError = nil
         } catch {
             chargeError = friendly(error)
@@ -863,7 +906,7 @@ final class TeslaAPI: ObservableObject {
         defer { actionsLoading = false }
         let offset = append ? actions.count : 0
         do {
-            let r: ActionsResp = try await fetch("/api/actions?limit=50&offset=\(offset)")
+            let r: ActionsResp = try await fetch("/api/actions?limit=50&offset=\(offset)", cacheKey: offset == 0 ? "actions" : nil)
             if append {
                 let known = Set(actions.map { $0.id })
                 actions += r.actions.filter { !known.contains($0.id) }
@@ -873,7 +916,13 @@ final class TeslaAPI: ObservableObject {
             actionsHasMore = r.hasMore ?? (r.actions.count >= 50)
             actionsError = nil
         } catch {
-            actionsError = friendly(error)
+            if !append, let d = loadDiskCache("actions"),
+               let r = try? JSONDecoder().decode(ActionsResp.self, from: d) {
+                actions = r.actions
+                actionsError = "离线 · 显示 \(cacheAge("actions") ?? "缓存")的记录"
+            } else {
+                actionsError = friendly(error)
+            }
         }
     }
 

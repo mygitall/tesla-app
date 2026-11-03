@@ -36,8 +36,8 @@ struct PowerCard: View {
                 // 可点击提示
                 HStack(spacing: 4) {
                     Text("查看充电详情")
-                        .font(.system(size: 10))
-                    Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
+                        .font(.app(10))
+                    Image(systemName: "chevron.right").font(.app(8, .semibold))
                 }
                 .foregroundColor(L.sub)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -57,13 +57,13 @@ struct PowerCard: View {
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 1) {
                 Text("\(battery)")
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.app(26, .bold))
                     .foregroundColor(L.text)
                 Text("%")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.app(11, .medium))
                     .foregroundColor(L.sub)
                 Text(isCharging ? "充电中" : "电量")
-                    .font(.system(size: 10))
+                    .font(.app(10))
                     .foregroundColor(isCharging ? L.orange : L.green)
             }
         }
@@ -120,16 +120,16 @@ struct PowerCard: View {
 
     private func miniStat(_ v: String, _ l: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(v).font(.system(size: 17, weight: .semibold)).foregroundColor(L.text)
-            Text(l).font(.system(size: 10)).foregroundColor(L.sub)
+            Text(v).font(.app(17, .semibold)).foregroundColor(L.text)
+            Text(l).font(.app(10)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func squareStat(_ v: String, _ l: String) -> some View {
         VStack(spacing: 3) {
-            Text(v).font(.system(size: 14, weight: .semibold)).foregroundColor(L.text)
-            Text(l).font(.system(size: 10)).foregroundColor(L.sub)
+            Text(v).font(.app(14, .semibold)).foregroundColor(L.text)
+            Text(l).font(.app(10)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)

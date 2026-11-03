@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var api = TeslaAPI.shared
     @State private var tab = 0
+    @State private var typoToken = 0     // 字号变化时重建界面
 
     var body: some View {
         Group {
@@ -23,6 +24,8 @@ struct ContentView: View {
                 LoginView(api: api)
             }
         }
+        .id(typoToken)
+        .onReceive(TypoScale.bump) { _ in typoToken &+= 1 }
         .preferredColorScheme(.dark)
         .task {
             // 蓝牙先启动：不依赖网络和登录，飞行模式下也能开关车门
@@ -53,8 +56,8 @@ struct TabBar: View {
                     } label: {
                     VStack(spacing: 4) {
                         Image(systemName: item.1)
-                            .font(.system(size: 19, weight: .light))
-                        Text(item.0).font(.system(size: 9.5, weight: .medium))
+                            .font(.app(19, .light))
+                        Text(item.0).font(.app(9.5, .medium))
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(selected == idx ? L.sand : L.dim)
@@ -84,10 +87,10 @@ struct PlaceholderView: View {
             L.bg.ignoresSafeArea()
             VStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 44, weight: .light))
+                    .font(.app(44, .light))
                     .foregroundColor(L.sub.opacity(0.6))
-                Text(title).font(.system(size: 19, weight: .semibold)).foregroundColor(L.text)
-                Text(note).font(.system(size: 13)).foregroundColor(L.sub)
+                Text(title).font(.app(19, .semibold)).foregroundColor(L.text)
+                Text(note).font(.app(13)).foregroundColor(L.sub)
                     .multilineTextAlignment(.center)
             }
             .padding(.bottom, 80)

@@ -76,7 +76,7 @@ struct ChargeDetailView: View {
                         await reload()
                     }
                 } label: {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 14))
+                    Image(systemName: "arrow.clockwise").font(.app(14))
                 }
                 .foregroundColor(L.text)
             }
@@ -152,8 +152,8 @@ struct ChargeDetailView: View {
     private var periodPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: "calendar").font(.system(size: 12)).foregroundColor(L.orange)
-                Text("充电统计").font(.system(size: 13, weight: .semibold)).foregroundColor(L.text)
+                Image(systemName: "calendar").font(.app(12)).foregroundColor(L.orange)
+                Text("充电统计").font(.app(13, .semibold)).foregroundColor(L.text)
                 Spacer()
                 // 原来这里有个加载菊花（ProgressView）：出现/消失会改变行高，
                 // 导致整页上下抖动，已去掉；加载状态改用不改变布局的方式表达。
@@ -186,7 +186,7 @@ struct ChargeDetailView: View {
             Text(api.chargeMonths.isEmpty
                  ? (api.chargeLoading ? "加载中…" : "还没有充电记录（插枪充电后自动统计）")
                  : " ")
-                .font(.system(size: 11))
+                .font(.app(11))
                 .foregroundColor(L.sub)
                 .frame(height: 14)
         }
@@ -198,7 +198,7 @@ struct ChargeDetailView: View {
     private func chip(title: String, active: Bool, tap: @escaping () -> Void) -> some View {
         Button(action: tap) {
             Text(title)
-                .font(.system(size: 12, weight: active ? .semibold : .regular))
+                .font(.app(12, (active ? .semibold : .regular)))
                 .foregroundColor(active ? Color(hex: 0x151717) : L.text)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
@@ -223,10 +223,10 @@ struct ChargeDetailView: View {
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 2) {
                         Text("\(battery)")
-                            .font(.system(size: 44, weight: .bold))
+                            .font(.app(44, .bold))
                             .foregroundColor(L.text)
                         Text("%")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.app(13, .medium))
                             .foregroundColor(L.sub)
                     }
                 }
@@ -237,12 +237,12 @@ struct ChargeDetailView: View {
                         .fill(isCharging ? L.orange : L.sub)
                         .frame(width: 7, height: 7)
                     Text(statusText)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.app(13, .medium))
                         .foregroundColor(isCharging ? L.orange : L.sub)
                 }
 
                 Text(s?.chargeLimit.map { "充电上限 \($0)%" } ?? " ")
-                    .font(.system(size: 11))
+                    .font(.app(11))
                     .foregroundColor(L.sub)
                     .opacity(s?.chargeLimit == nil ? 0 : 1)
                     .frame(height: 14)
@@ -279,12 +279,12 @@ struct ChargeDetailView: View {
 
     private func bigStat(_ title: String, _ value: String, _ field: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 11)).foregroundColor(L.sub)
+            Text(title).font(.app(11)).foregroundColor(L.sub)
             Text(value)
-                .font(.system(size: 22, weight: .semibold))
+                .font(.app(22, .semibold))
                 .foregroundColor(value == "—" ? L.sub : L.text)
             Text(field)
-                .font(.system(size: 8, design: .monospaced))
+                .font(.appMono(8))
                 .foregroundColor(L.sub.opacity(0.7))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -304,17 +304,17 @@ struct ChargeDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("电池健康度")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.app(13, .semibold))
                         .foregroundColor(L.text)
                     Spacer()
                     if let pct = h?.healthPct {
                         Text(String(format: "%.1f%%", pct))
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(.app(22, .semibold))
                             .monospacedDigit()
                             .foregroundColor(pct >= 97 ? L.green : (pct >= 90 ? L.sand : L.red))
                     } else {
                         Text("--")
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(.app(22, .semibold))
                             .foregroundColor(L.dim)
                     }
                 }
@@ -334,9 +334,9 @@ struct ChargeDetailView: View {
                 .frame(height: 6)
 
                 HStack(spacing: 4) {
-                    Image(systemName: "bolt.fill").font(.system(size: 9))
+                    Image(systemName: "bolt.fill").font(.app(9))
                     Text("满电续航 \(fmt(h?.fullRangeKm)) km · 出厂 \(fmt(h?.nominalRangeKm)) km")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
                 .foregroundColor(L.sub)
                 .frame(height: 16)
@@ -348,14 +348,14 @@ struct ChargeDetailView: View {
                         let pt: BatteryHealthPoint? = i < hist.count ? hist[i] : nil
                         HStack {
                             Text(pt?.day ?? "—")
-                                .font(.system(size: 11))
+                                .font(.app(11))
                                 .foregroundColor(pt == nil ? L.dim.opacity(0.35) : L.dim)
                             Spacer()
                             Text(pt.map { "\($0.battery ?? 0)% 充满" } ?? "—")
-                                .font(.system(size: 11))
+                                .font(.app(11))
                                 .foregroundColor(pt == nil ? L.dim.opacity(0.35) : L.dim)
                             Text(pt.map { "\(self.fmt($0.rangeKm)) km" } ?? "—")
-                                .font(.system(size: 11))
+                                .font(.app(11))
                                 .monospacedDigit()
                                 .foregroundColor(pt == nil ? L.sub.opacity(0.35) : L.sub)
                         }
@@ -364,7 +364,7 @@ struct ChargeDetailView: View {
                 }
 
                 Text("基于最近 3 次充满电的表显续航推算，仅作参考；官方数据需服务模式")
-                    .font(.system(size: 9.5))
+                    .font(.app(9.5))
                     .foregroundColor(L.dim)
             }
         }
@@ -380,11 +380,11 @@ struct ChargeDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(periodTitle)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.app(13, .semibold))
                         .foregroundColor(L.text)
                     Spacer()
                     Text("共 \(summary?.totals.count ?? 0) 次")
-                        .font(.system(size: 11)).foregroundColor(L.sub)
+                        .font(.app(11)).foregroundColor(L.sub)
                 }
 
                 HStack(spacing: 8) {
@@ -402,18 +402,18 @@ struct ChargeDetailView: View {
                 if allTime, summary?.totals.minutesEstimated == true,
                    let kw = summary?.totals.assumedKw, kw > 0 {
                     HStack(spacing: 4) {
-                        Image(systemName: "exclamationmark.triangle").font(.system(size: 9))
+                        Image(systemName: "exclamationmark.triangle").font(.app(9))
                         Text("历史时长按 \(String(format: "%.0f", kw)) kW 估算（可改），也可手工填真实时长")
-                            .font(.system(size: 10))
+                            .font(.app(10))
                     }
                     .foregroundColor(L.orange)
                 }
 
                 if allTime, let b = summary?.baseline, b.sessions > 0 || b.kwh > 0 {
                     HStack(spacing: 4) {
-                        Image(systemName: "info.circle").font(.system(size: 9))
+                        Image(systemName: "info.circle").font(.app(9))
                         Text("含官方 App 历史基线 \(b.sessions) 次 / \(String(format: "%.0f", b.kwh)) 度")
-                            .font(.system(size: 10))
+                            .font(.app(10))
                     }
                     .foregroundColor(L.sub)
                 }
@@ -430,8 +430,8 @@ struct ChargeDetailView: View {
                     showBaselineEditor = true
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "square.and.arrow.down").font(.system(size: 10))
-                        Text("导入官方 App 历史数据").font(.system(size: 11))
+                        Image(systemName: "square.and.arrow.down").font(.app(10))
+                        Text("导入官方 App 历史数据").font(.app(11))
                     }
                     .foregroundColor(L.blue)
                 }
@@ -454,9 +454,9 @@ struct ChargeDetailView: View {
 
     private func totalTile(_ title: String, _ value: String, _ tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 10)).foregroundColor(L.sub)
+            Text(title).font(.app(10)).foregroundColor(L.sub)
             Text(value)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.app(18, .semibold))
                 .foregroundColor(tint)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -470,36 +470,36 @@ struct ChargeDetailView: View {
     private var sessionListCard: some View {
         LCard {
             VStack(alignment: .leading, spacing: 10) {
-                Text("充电明细").font(.system(size: 13, weight: .semibold)).foregroundColor(L.text)
+                Text("充电明细").font(.app(13, .semibold)).foregroundColor(L.text)
 
                 if let list = summary?.sessions, !list.isEmpty {
                     ForEach(list.prefix(20)) { item in
                         HStack(spacing: 10) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(dateText(item.startTs))
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(.app(12, .medium))
                                     .foregroundColor(L.text)
                                 Text("\(item.startBattery ?? 0)% → \(item.endBattery ?? 0)%")
-                                    .font(.system(size: 10)).foregroundColor(L.sub)
+                                    .font(.app(10)).foregroundColor(L.sub)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 HStack(spacing: 4) {
                                     if item.estimated == true {
-                                        Text("估").font(.system(size: 8, weight: .bold))
+                                        Text("估").font(.app(8, .bold))
                                             .foregroundColor(Color(hex: 0x151717))
                                             .padding(.horizontal, 4).padding(.vertical, 1)
                                             .background(Capsule().fill(L.orange))
                                     }
                                     Text(String(format: "%.1f 度", item.energyKwh))
-                                        .font(.system(size: 13, weight: .semibold))
+                                        .font(.app(13, .semibold))
                                         .foregroundColor(L.orange)
                                 }
                                 Text("\(durText(item.durationMin)) · 峰值 \(String(format: "%.1f", item.peakPower))kW")
-                                    .font(.system(size: 9)).foregroundColor(L.sub)
+                                    .font(.app(9)).foregroundColor(L.sub)
                                 if item.truncated == true {
                                     Text("后续采样缺失，已按电量差补算")
-                                        .font(.system(size: 8)).foregroundColor(L.sub.opacity(0.8))
+                                        .font(.app(8)).foregroundColor(L.sub.opacity(0.8))
                                 }
                             }
                         }
@@ -510,7 +510,7 @@ struct ChargeDetailView: View {
                     }
                 } else {
                     Text("该时间段暂无充电记录")
-                        .font(.system(size: 11)).foregroundColor(L.sub)
+                        .font(.app(11)).foregroundColor(L.sub)
                         .padding(.vertical, 8)
                 }
             }
@@ -519,7 +519,7 @@ struct ChargeDetailView: View {
 
     private var sourceNote: some View {
         Text("实时数值来自特斯拉 Fleet API 的 charge_state；统计基于每分钟采样推导的充电会话。未充电时电流/功率/速度为 0 属正常。")
-            .font(.system(size: 10))
+            .font(.app(10))
             .foregroundColor(L.sub)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 4)

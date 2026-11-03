@@ -50,7 +50,7 @@ struct TripsListView: View {
                                 HStack(spacing: 6) {
                                     if api.tripsLoading { ProgressView().scaleEffect(0.7) }
                                     Text(api.tripsLoading ? "加载中…" : "加载更多（已 \(api.trips.count) 条）")
-                                        .font(.system(size: 12))
+                                        .font(.app(12))
                                         .foregroundColor(L.sand)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -91,13 +91,13 @@ struct TripsListView: View {
                     Divider().overlay(L.line)
                     HStack(spacing: 4) {
                         Text("今日")
-                            .font(.system(size: 11)).foregroundColor(L.sub)
+                            .font(.app(11)).foregroundColor(L.sub)
                         Text(String(format: "%.1f km", t.distanceKm ?? 0))
-                            .font(.system(size: 11, weight: .medium)).monospacedDigit()
+                            .font(.app(11, .medium)).monospacedDigit()
                             .foregroundColor(L.text)
                         if let gap = t.gapKm, gap >= 0.3 {
                             Text("· 其中 \(String(format: "%.1f", gap)) km 为未记录短途")
-                                .font(.system(size: 10))
+                                .font(.app(10))
                                 .foregroundColor(L.dim)
                         }
                         Spacer()
@@ -114,11 +114,11 @@ struct TripsListView: View {
     private func stat(_ v: String, _ l: String, small: Bool = false) -> some View {
         VStack(spacing: 3) {
             Text(v)
-                .font(.system(size: small ? 17 : 20, weight: .bold))
+                .font(.system(size: (small ? 17 : 20) * TypoScale.factor(small ? 17 : 20), weight: .bold))
                 .foregroundColor(L.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            Text(l).font(.system(size: 10)).foregroundColor(L.sub)
+            Text(l).font(.app(10)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity)
     }
@@ -132,9 +132,9 @@ struct TripsListView: View {
     private var emptyCard: some View {
         LCard {
             VStack(spacing: 8) {
-                Image(systemName: "car.side").font(.system(size: 26)).foregroundColor(L.sub)
-                Text("还没有行程记录").font(.system(size: 13)).foregroundColor(L.text)
-                Text("开一段路后自动生成").font(.system(size: 11)).foregroundColor(L.sub)
+                Image(systemName: "car.side").font(.app(26)).foregroundColor(L.sub)
+                Text("还没有行程记录").font(.app(13)).foregroundColor(L.text)
+                Text("开一段路后自动生成").font(.app(11)).foregroundColor(L.sub)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
@@ -151,31 +151,31 @@ struct TripRow: View {
         LCard {
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(dateText).font(.system(size: 12, weight: .medium)).foregroundColor(L.text)
-                    Text(timeText).font(.system(size: 10)).foregroundColor(L.sub)
+                    Text(dateText).font(.app(12, .medium)).foregroundColor(L.text)
+                    Text(timeText).font(.app(10)).foregroundColor(L.sub)
                 }
                 .frame(width: 66, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(String(format: "%.1f", trip.distanceKm))
-                        .font(.system(size: 22, weight: .bold)).foregroundColor(L.text)
-                    Text("公里").font(.system(size: 9)).foregroundColor(L.sub)
+                        .font(.app(22, .bold)).foregroundColor(L.text)
+                    Text("公里").font(.app(9)).foregroundColor(L.sub)
                 }
 
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(duText).font(.system(size: 12, weight: .medium)).foregroundColor(L.text)
+                    Text(duText).font(.app(12, .medium)).foregroundColor(L.text)
                     HStack(spacing: 4) {
                         if let b0 = trip.startBattery, let b1 = trip.endBattery {
-                            Text("\(b0)%→\(b1)%").font(.system(size: 10)).foregroundColor(L.sub)
+                            Text("\(b0)%→\(b1)%").font(.app(10)).foregroundColor(L.sub)
                         }
                         if let s = trip.maxSpeedKmh, s > 0 {
-                            Text("· 最高\(s)").font(.system(size: 10)).foregroundColor(L.sub)
+                            Text("· 最高\(s)").font(.app(10)).foregroundColor(L.sub)
                         }
                     }
                 }
-                Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold)).foregroundColor(L.sub)
+                Image(systemName: "chevron.right").font(.app(10, .semibold)).foregroundColor(L.sub)
             }
         }
     }
@@ -212,8 +212,8 @@ struct TripDetailView: View {
                         ProgressView().scaleEffect(1.2)
                     } else if track.isEmpty {
                         VStack(spacing: 6) {
-                            Image(systemName: "map").font(.system(size: 28)).foregroundColor(L.sub)
-                            Text("这段行程没有轨迹点").font(.system(size: 12)).foregroundColor(L.sub)
+                            Image(systemName: "map").font(.app(28)).foregroundColor(L.sub)
+                            Text("这段行程没有轨迹点").font(.app(12)).foregroundColor(L.sub)
                         }
                     }
                 }
@@ -263,8 +263,8 @@ struct TripDetailView: View {
 
     private func tile(_ v: String, _ l: String, _ c: Color) -> some View {
         VStack(spacing: 3) {
-            Text(v).font(.system(size: 18, weight: .semibold)).foregroundColor(c)
-            Text(l).font(.system(size: 9)).foregroundColor(L.sub)
+            Text(v).font(.app(18, .semibold)).foregroundColor(c)
+            Text(l).font(.app(9)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 9)

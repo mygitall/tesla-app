@@ -83,6 +83,7 @@ struct HomeView: View {
             } else {
                 ble.goBackground()
                 stopAutoRefresh()
+                CrashLogger.markCleanExit()
             }
         }
         .onChange(of: ble.connected) { on in
@@ -151,22 +152,22 @@ struct HomeView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("TESLA MODEL Y")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.app(13, .medium))
                     .tracking(5)
                     .foregroundColor(L.text)
                 Text("特斯拉 Model Y 标准续航版")
-                    .font(.system(size: 11))
+                    .font(.app(11))
                     .foregroundColor(L.sub)
                 HStack(spacing: 5) {
                     Circle()
                         .fill(statusColor)
                         .frame(width: 5, height: 5)
                     Text(statusText)
-                        .font(.system(size: 9.5))
+                        .font(.app(9.5))
                         .foregroundColor(statusColor.opacity(0.95))
                     if let t = api.lastRefreshAt {
                         Text("· 更新于 \(timeText(t))")
-                            .font(.system(size: 9.5))
+                            .font(.app(9.5))
                             .foregroundColor(L.dim)
                             .monospacedDigit()
                     }
@@ -175,7 +176,7 @@ struct HomeView: View {
             Spacer()
             Button { showSettings = true } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 20, weight: .light))
+                    .font(.app(20, .light))
                     .foregroundColor(L.text.opacity(0.85))
                     .frame(width: 34, height: 34)
             }
@@ -230,7 +231,7 @@ struct HomeView: View {
                     .shadow(color: .black.opacity(0.5), radius: 24, y: 12)
             } else {
                 Image(systemName: "car.side.fill")
-                    .font(.system(size: 56, weight: .ultraLight))
+                    .font(.app(56, .ultraLight))
                     .foregroundColor(L.text.opacity(0.25))
                     .frame(height: 110)
             }
@@ -256,13 +257,13 @@ struct HomeView: View {
 
                     HStack(alignment: .firstTextBaseline, spacing: 1) {
                         Text("\(s?.battery ?? 0)")
-                            .font(.system(size: batteryFontSize, weight: .medium))
+                            .font(.system(size: batteryFontSize * TypoScale.factor(batteryFontSize), weight: .medium))
                             .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                             .foregroundColor(L.text)
                         Text("%")
-                            .font(.system(size: 9, weight: .regular))
+                            .font(.app(9, .regular))
                             .foregroundColor(L.sub)
                     }
                     .fixedSize()
@@ -271,11 +272,11 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("续航 \(s?.rangeKm ?? 0) km")
-                        .font(.system(size: 12))
+                        .font(.app(12))
                         .foregroundColor(L.sub)
                     if let added = s?.addedKm, added > 0 {
                         Text("上次充电 +\(added) km")
-                            .font(.system(size: 10.5))
+                            .font(.app(10.5))
                             .foregroundColor(L.dim)
                     }
                 }
@@ -331,11 +332,11 @@ struct HomeView: View {
     private func metric(_ v: String, _ unit: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(v)
-                .font(.system(size: 23, weight: .regular))
+                .font(.app(23, .regular))
                 .monospacedDigit()
                 .foregroundColor(L.text)
             Text(unit)
-                .font(.system(size: 11))
+                .font(.app(11))
                 .foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -431,11 +432,11 @@ struct HomeView: View {
                     .stroke(active ? L.sand : L.text.opacity(0.45), lineWidth: 1)
                     .frame(width: 38, height: 38)
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .light))
+                    .font(.app(15, .light))
                     .foregroundColor(active ? L.sand : L.text.opacity(0.9))
             }
             Text(title)
-                .font(.system(size: 11))
+                .font(.app(11))
                 .foregroundColor(active ? L.sand : L.text.opacity(0.85))
         }
         .frame(maxWidth: .infinity)
@@ -454,12 +455,12 @@ struct HomeView: View {
             VStack(spacing: 10) {
                 HStack(spacing: 6) {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                         .foregroundColor(L.sand)
-                    Text("充电信息").font(.system(size: 13, weight: .medium)).foregroundColor(L.sub)
+                    Text("充电信息").font(.app(13, .medium)).foregroundColor(L.sub)
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.app(10, .semibold))
                         .foregroundColor(L.dim)
                 }
                 HStack(spacing: 0) {
@@ -484,16 +485,16 @@ struct HomeView: View {
             // 状态行
             HStack(spacing: 12) {
                 Image(systemName: "iphone")
-                    .font(.system(size: 20, weight: .light))
+                    .font(.app(20, .light))
                     .foregroundColor(L.text.opacity(0.9))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("手机钥匙").font(.system(size: 13, weight: .medium)).foregroundColor(L.text)
-                    Text(bleStatusText).font(.system(size: 11)).foregroundColor(L.sub)
+                    Text("手机钥匙").font(.app(13, .medium)).foregroundColor(L.text)
+                    Text(bleStatusText).font(.app(11)).foregroundColor(L.sub)
                 }
                 Spacer()
                 Button { showBleLog = true } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.app(10, .semibold))
                         .foregroundColor(L.dim)
                 }
                 .buttonStyle(.plain)
@@ -531,8 +532,8 @@ struct HomeView: View {
                            isOn: Bool, action: @escaping (Bool) -> Void) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 12.5)).foregroundColor(L.text.opacity(0.9))
-                Text(subtitle).font(.system(size: 9.5)).foregroundColor(L.dim)
+                Text(title).font(.app(12.5)).foregroundColor(L.text.opacity(0.9))
+                Text(subtitle).font(.app(9.5)).foregroundColor(L.dim)
             }
             Spacer()
             Toggle("", isOn: Binding(
@@ -621,11 +622,11 @@ struct HomeView: View {
                         ProgressView().scaleEffect(0.7).tint(L.sand)
                     } else {
                         Image(systemName: t.isError ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
-                            .font(.system(size: 13))
+                            .font(.app(13))
                             .foregroundColor(t.isError ? Color(hex: 0xE5484D) : L.ringGreen)
                     }
                     Text(t.text)
-                        .font(.system(size: 11.5))
+                        .font(.app(11.5))
                         .foregroundColor(L.text)
                         .lineLimit(2)
                     Spacer(minLength: 0)
@@ -636,7 +637,7 @@ struct HomeView: View {
                             Task { await api.retryLastCommand() }
                         } label: {
                             Text("重试")
-                                .font(.system(size: 11.5, weight: .medium))
+                                .font(.app(11.5, .medium))
                                 .foregroundColor(L.sand)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
@@ -705,15 +706,15 @@ struct BleLogSheet: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 8) {
                             Circle().fill(ble.connected ? L.green : L.dim).frame(width: 7, height: 7)
-                            Text(ble.connected ? "已连接" : "未连接").font(.system(size: 12)).foregroundColor(L.text)
+                            Text(ble.connected ? "已连接" : "未连接").font(.app(12)).foregroundColor(L.text)
                             Spacer()
-                            Text("扫描 \(ble.scanCount) 次 · 信号 \(ble.lastRSSI)").font(.system(size: 11)).foregroundColor(L.sub)
+                            Text("扫描 \(ble.scanCount) 次 · 信号 \(ble.lastRSSI)").font(.app(11)).foregroundColor(L.sub)
                         }
                         .padding(.bottom, 6)
 
                         ForEach(ble.events.prefix(60), id: \.self) { line in
                             Text(line)
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(.appMono(10))
                                 .foregroundColor(L.sub)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }

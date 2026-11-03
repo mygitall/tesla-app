@@ -18,19 +18,19 @@ struct TodayStatTile: View {
     var body: some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.app(14, .semibold))
                 .foregroundColor(tint ?? L.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             HStack(spacing: 2) {
                 Text(label)
-                    .font(.system(size: 10))
+                    .font(.app(10))
                     .foregroundColor(L.sub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if showChevron {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 7, weight: .semibold))
+                        .font(.app(7, .semibold))
                         .foregroundColor(L.sub.opacity(0.7))
                 }
             }

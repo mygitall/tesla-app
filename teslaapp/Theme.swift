@@ -39,7 +39,7 @@ struct Chip: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 11, weight: .semibold))
+            .font(.app(11, .semibold))
             .foregroundColor(color)
             .padding(.horizontal, 9)
             .padding(.vertical, 4)
@@ -49,5 +49,64 @@ struct Chip: View {
             .overlay(
                 Capsule().stroke(color.opacity(0.45), lineWidth: 1)
             )
+    }
+}
+
+
+// MARK: - 动态字体（跟随系统「文字大小」设置）
+
+import UIKit
+import Combine
+
+/// 全局字号缩放因子：由系统「设置 → 显示与亮度 → 文字大小」决定。
+/// 设计字号保持不变，仅按用户偏好等比放大（上限 1.35，避免撑破卡片）。
+enum TypoScale {
+    /// 0...0.35 的额外放大比例
+    private(set) static var extra: CGFloat = 0
+
+    static func factor(_ size: CGFloat) -> CGFloat {
+        1 + extra * min(1, 12 / max(size, 8))   // 小字放大比例略高，大字略低
+    }
+
+    static func apply(_ category: UIContentSizeCategory) {
+        switch category {
+        case .extraSmall: extra = -0.06
+        case .small: extra = -0.03
+        case .medium: extra = 0
+        case .large: extra = 0
+        case .extraLarge: extra = 0.08
+        case .extraExtraLarge: extra = 0.16
+        case .extraExtraExtraLarge: extra = 0.24
+        case .accessibilityMedium: extra = 0.30
+        default: extra = 0.35
+        }
+    }
+
+    static func start() {
+        apply(UIApplication.shared.preferredContentSizeCategory)
+        NotificationCenter.default.addObserver(
+            forName: UIContentSizeCategory.didChangeNotification,
+            object: nil, queue: .main
+        ) { note in
+            if let c = note.userInfo?[UIContentSizeCategory.newValueUserInfoKey] as? UIContentSizeCategory {
+                apply(c)
+            } else {
+                apply(UIApplication.shared.preferredContentSizeCategory)
+            }
+            TypoScale.bump.send()
+        }
+    }
+
+    /// 变化信号（让根视图重建，字号才会刷新）
+    static let bump = PassthroughSubject<Void, Never>()
+}
+
+extension Font {
+    /// 支持动态字体的系统字体
+    static func app(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size * TypoScale.factor(size), weight: weight)
+    }
+    static func appMono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size * TypoScale.factor(size), weight: weight, design: .monospaced)
     }
 }

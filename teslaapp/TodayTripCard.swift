@@ -14,11 +14,11 @@ struct TodayTripCard: View {
             // 标题行
             HStack {
                 Text("今日行程")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.app(13, .medium))
                     .foregroundColor(L.sub)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.app(10, .semibold))
                     .foregroundColor(L.dim)
             }
 
@@ -45,13 +45,13 @@ struct TodayTripCard: View {
     private func cell(_ value: String, _ unit: String, leading: CGFloat) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 3) {
             Text(value)
-                .font(.system(size: 22, weight: .medium))
+                .font(.app(22, .medium))
                 .monospacedDigit()
                 .foregroundColor(L.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Text(unit)
-                .font(.system(size: 10.5))
+                .font(.app(10.5))
                 .foregroundColor(L.sub)
                 .lineLimit(1)
         }

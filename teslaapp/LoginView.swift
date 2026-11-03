@@ -24,10 +24,10 @@ struct LoginView: View {
 
                 VStack(spacing: 10) {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 34))
+                        .font(.app(34))
                         .foregroundStyle(Theme.amber, Theme.green)
                     Text("TESLA DASH")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.system(size: 17 * TypoScale.factor(17), weight: .bold, design: .rounded))
                         .tracking(3)
                         .foregroundColor(Theme.text)
                 }
@@ -70,11 +70,11 @@ struct LoginView: View {
                         RoundedRectangle(cornerRadius: 12).stroke(Theme.line, lineWidth: 1)
                     )
                     .foregroundColor(Theme.text)
-                    .font(.system(size: mode == .key ? 13 : 16, design: mode == .key ? .monospaced : .default))
+                    .font(.system(size: (mode == .key ? 13 : 16) * TypoScale.factor(14), design: mode == .key ? .monospaced : .default))
 
                     if let errorText {
                         Text(errorText)
-                            .font(.system(size: 12))
+                            .font(.app(12))
                             .foregroundColor(Theme.red)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -83,7 +83,7 @@ struct LoginView: View {
                         HStack(spacing: 8) {
                             if working { ProgressView().tint(.black) }
                             Text(working ? "验证中…" : "进入")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.app(15, .semibold))
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -99,7 +99,7 @@ struct LoginView: View {
                 Text(mode == .key
                      ? "密钥链接在服务器上：/opt/tesla-dash/data/.access-key"
                      : "密码是服务器 .env 里的 APP_PASSWORD")
-                    .font(.system(size: 10))
+                    .font(.app(10))
                     .foregroundColor(Theme.dim)
                     .multilineTextAlignment(.center)
                     .padding(.top, 14)
@@ -113,11 +113,11 @@ struct LoginView: View {
                 } label: {
                     HStack(spacing: 5) {
                         Text("服务器：\(api.baseURLString)")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(.appMono(10))
                             .lineLimit(1)
                             .truncationMode(.middle)
                         Image(systemName: "pencil")
-                            .font(.system(size: 9))
+                            .font(.app(9))
                     }
                     .foregroundColor(Theme.dim)
                 }
@@ -170,12 +170,12 @@ struct ServerEditSheet: View {
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
-                        .font(.system(size: 14, design: .monospaced))
+                        .font(.appMono(14))
                 } header: {
                     Text("服务器地址")
                 } footer: {
                     Text("换成你自己的服务器地址；保存后需要重新登录。")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
                 Section {
                     Button("恢复默认") {

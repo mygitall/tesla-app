@@ -52,8 +52,8 @@ struct Pill: View {
     let label: String
     var body: some View {
         VStack(spacing: 2) {
-            Text(value).font(.system(size: 17, weight: .semibold)).foregroundColor(L.text)
-            Text(label).font(.system(size: 10)).foregroundColor(L.sub)
+            Text(value).font(.app(17, .semibold)).foregroundColor(L.text)
+            Text(label).font(.app(10)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
@@ -68,8 +68,8 @@ struct Tag: View {
     var color: Color = L.sub
     var body: some View {
         HStack(spacing: 4) {
-            if let icon { Text(icon).font(.system(size: 11)) }
-            Text(text).font(.system(size: 12)).foregroundColor(color)
+            if let icon { Text(icon).font(.app(11)) }
+            Text(text).font(.app(12)).foregroundColor(color)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)

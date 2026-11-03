@@ -26,15 +26,15 @@ struct BatteryRing: View {
             VStack(spacing: 1) {
                 HStack(alignment: .firstTextBaseline, spacing: 1) {
                     Text(percent.map(String.init) ?? "—")
-                        .font(.system(size: 58, weight: .light, design: .rounded))
+                        .font(.system(size: 58 * TypoScale.factor(58), weight: .light, design: .rounded))
                         .monospacedDigit()
                     Text("%")
-                        .font(.system(size: 19, weight: .light))
+                        .font(.app(19, .light))
                         .foregroundColor(Theme.dim)
                         .baselineOffset(8)
                 }
                 Text(rangeKm.map { "\($0) km" } ?? "无数据")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.app(13, .medium))
                     .monospacedDigit()
                     .foregroundColor(Theme.dim)
             }
@@ -53,10 +53,10 @@ struct StatTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.system(size: 11))
+                .font(.app(11))
                 .foregroundColor(Theme.dim)
             Text(value)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.app(17, .semibold))
                 .foregroundColor(accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -88,9 +88,9 @@ struct ActionButton: View {
         Button(action: action) {
             VStack(spacing: 7) {
                 Image(systemName: icon)
-                    .font(.system(size: 26, weight: .regular))
+                    .font(.app(26, .regular))
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.app(14, .semibold))
             }
             .frame(maxWidth: .infinity)
             .frame(height: 82)
@@ -119,14 +119,14 @@ struct LoadErrorCard: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 13))
+                .font(.app(13))
                 .foregroundColor(L.orange)
             VStack(alignment: .leading, spacing: 2) {
                 Text("加载失败")
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.app(12.5, .medium))
                     .foregroundColor(L.text)
                 Text(message)
-                    .font(.system(size: 11))
+                    .font(.app(11))
                     .foregroundColor(L.sub)
                     .lineLimit(2)
             }
@@ -136,7 +136,7 @@ struct LoadErrorCard: View {
                 retry()
             } label: {
                 Text("重试")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.app(12, .medium))
                     .foregroundColor(L.sand)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)

@@ -17,12 +17,12 @@ struct SettingsSheet: View {
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
-                        .font(.system(size: 14, design: .monospaced))
+                        .font(.appMono(14))
                 } header: {
                     Text("服务器地址")
                 } footer: {
                     Text("修改后需要重新登录。")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
 
                 Section {
@@ -32,7 +32,7 @@ struct SettingsSheet: View {
                         TextField("1.60", text: $priceText)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .font(.system(size: 14, design: .monospaced))
+                            .font(.appMono(14))
                             .frame(width: 80)
                         Text("元/度").foregroundColor(.secondary)
                     }
@@ -49,7 +49,7 @@ struct SettingsSheet: View {
                     Text("用电成本")
                 } footer: {
                     Text("用于计算充电花费。不同地区/峰谷电价不同，按你的电费单填写。")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
 
                 Section {
@@ -66,13 +66,24 @@ struct SettingsSheet: View {
 
                 Section {
                     NavigationLink {
+                        CrashLogView()
+                    } label: {
+                        HStack {
+                            Text("诊断日志")
+                            Spacer()
+                            Text(CrashLogger.read().isEmpty ? "无记录" : "有记录")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    NavigationLink {
                         ActionHistoryView(api: api)
                     } label: {
                         HStack {
                             Text("操作历史")
                             Spacer()
                             Text("锁车 / 空调 / 启动")
-                                .font(.system(size: 12))
+                                .font(.app(12))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -80,7 +91,7 @@ struct SettingsSheet: View {
                     Text("记录")
                 } footer: {
                     Text("最近 1000 条控制操作，含自动上锁。")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
 
                 Section {
@@ -91,11 +102,11 @@ struct SettingsSheet: View {
                     }
                     HStack {
                         Text("接口"); Spacer()
-                        Text("/api/app/summary").foregroundColor(.secondary).font(.system(size: 12, design: .monospaced))
+                        Text("/api/app/summary").foregroundColor(.secondary).font(.appMono(12))
                     }
                 } footer: {
                     Text("离车自动上锁、远程控制均由服务器执行，App 只负责展示与下发。")
-                        .font(.system(size: 11))
+                        .font(.app(11))
                 }
             }
             .navigationTitle("设置")
@@ -145,7 +156,7 @@ struct ActionHistoryView: View {
     var body: some View {
         List {
             if let e = api.actionsError {
-                Text(e).font(.system(size: 13)).foregroundColor(.red)
+                Text(e).font(.app(13)).foregroundColor(.red)
             }
             ForEach(grouped, id: \.0) { day, items in
                 Section(header: Text(dayLabel(day))) {
@@ -167,7 +178,7 @@ struct ActionHistoryView: View {
                 }
             }
             if api.actions.isEmpty && !api.actionsLoading {
-                Text("还没有操作记录").font(.system(size: 13)).foregroundColor(.secondary)
+                Text("还没有操作记录").font(.app(13)).foregroundColor(.secondary)
             }
         }
         .navigationTitle("操作历史")
@@ -178,25 +189,25 @@ struct ActionHistoryView: View {
     private func row(_ a: ActionRecord) -> some View {
         HStack(spacing: 10) {
             Image(systemName: a.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                .font(.system(size: 14))
+                .font(.app(14))
                 .foregroundColor(a.ok ? .green : .red)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(a.label ?? a.action).font(.system(size: 14))
+                    Text(a.label ?? a.action).font(.app(14))
                     if a.source == "auto" {
                         Text("自动")
-                            .font(.system(size: 9))
+                            .font(.app(9))
                             .padding(.horizontal, 5).padding(.vertical, 1)
                             .background(Capsule().fill(Color.orange.opacity(0.18)))
                             .foregroundColor(.orange)
                     }
                 }
                 if let d = a.detail, !d.isEmpty {
-                    Text(d).font(.system(size: 11)).foregroundColor(.secondary).lineLimit(2)
+                    Text(d).font(.app(11)).foregroundColor(.secondary).lineLimit(2)
                 }
             }
             Spacer()
-            Text(timeLabel(a.ts)).font(.system(size: 12, design: .monospaced)).foregroundColor(.secondary)
+            Text(timeLabel(a.ts)).font(.appMono(12)).foregroundColor(.secondary)
         }
         .padding(.vertical, 2)
     }
@@ -214,5 +225,44 @@ struct ActionHistoryView: View {
         if cal.isDateInYesterday(d) { return "昨天" }
         let g = DateFormatter(); g.dateFormat = "M月d日"
         return g.string(from: d)
+    }
+}
+
+
+// MARK: - 诊断日志（崩溃记录）
+
+struct CrashLogView: View {
+    @State private var text = ""
+    @State private var copied = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                if text.isEmpty {
+                    Text("没有异常记录").font(.system(size: 13)).foregroundColor(.secondary)
+                } else {
+                    Text(text)
+                        .font(.system(size: 11, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(16)
+        }
+        .navigationTitle("诊断日志")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: 12) {
+                    Button(copied ? "已复制" : "复制") {
+                        UIPasteboard.general.string = text
+                        copied = true
+                    }
+                    Button("清空", role: .destructive) {
+                        CrashLogger.clear()
+                        text = ""
+                    }
+                }
+            }
+        }
+        .onAppear { text = CrashLogger.read() }
     }
 }
