@@ -9,6 +9,8 @@ struct LoginView: View {
     @State private var input = ""
     @State private var errorText: String?
     @State private var working = false
+    @State private var editServer = false
+    @State private var serverText = ""
     @FocusState private var focused: Bool
 
     private var canSubmit: Bool { !input.isEmpty && !working }
@@ -104,18 +106,32 @@ struct LoginView: View {
 
                 Spacer()
 
-                Text("服务器：\(api.baseURLString)")
-                    .font(.system(size: 10, design: .monospaced))
+                Button {
+                    Haptics.tap()
+                    serverText = api.baseURLString
+                    editServer = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Text("服务器：\(api.baseURLString)")
+                            .font(.system(size: 10, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Image(systemName: "pencil")
+                            .font(.system(size: 9))
+                    }
                     .foregroundColor(Theme.dim)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .padding(.bottom, 10)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 10)
 
                 Spacer()
             }
             .padding(.horizontal, 26)
         }
         .onAppear { focused = true }
+        .sheet(isPresented: $editServer) {
+            ServerEditSheet(api: api, text: $serverText)
+        }
     }
 
     private func submit() {
@@ -135,6 +151,53 @@ struct LoginView: View {
                 errorText = error.localizedDescription
             }
             working = false
+        }
+    }
+}
+
+
+/// 登录页修改服务器地址（未登录时也能改，避免"连错服务器就登不进去"）
+struct ServerEditSheet: View {
+    @ObservedObject var api: TeslaAPI
+    @Binding var text: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    TextField("https://www.zhangweiwei.cc", text: $text)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .font(.system(size: 14, design: .monospaced))
+                } header: {
+                    Text("服务器地址")
+                } footer: {
+                    Text("换成你自己的服务器地址；保存后需要重新登录。")
+                        .font(.system(size: 11))
+                }
+                Section {
+                    Button("恢复默认") {
+                        text = "https://www.zhangweiwei.cc"
+                    }
+                }
+            }
+            .navigationTitle("修改服务器")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !t.isEmpty { api.baseURLString = t }
+                        Haptics.success()
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }

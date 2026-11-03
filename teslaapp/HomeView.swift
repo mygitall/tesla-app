@@ -27,6 +27,9 @@ struct HomeView: View {
     private var s: VehicleSummary? { api.summary }
 
     /// 优先用本地乐观状态，避免等网络
+    /// 首次加载未完成 → 显示骨架屏（避免一屏 0 / -- 像坏了）
+    private var skeletonMode: Bool { s == nil && !api.initialLoadDone }
+
     private var isLocked: Bool { pendingLock ?? (s?.locked ?? true) }
     private var isClimateOn: Bool { pendingClimate ?? (s?.climateOn ?? false) }
     private var isCharging: Bool { (s?.charging ?? "").lowercased() == "charging" }
@@ -52,6 +55,11 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, hPad)
                     .padding(.top, 80)
+                    // 首屏骨架屏：首次加载还没完成时，用占位块代替一堆 0 和 --
+                    .redacted(reason: skeletonMode ? .placeholder : [])
+                    .opacity(skeletonMode ? 0.55 : 1)
+                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
+                               value: skeletonMode)
                 }
             }
             .navigationBarHidden(true)

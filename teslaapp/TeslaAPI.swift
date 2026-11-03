@@ -352,6 +352,8 @@ final class TeslaAPI: ObservableObject {
     @Published var actionsHasMore = false
     /// 刷新连续失败次数（用于退避）
     @Published var consecutiveRefreshFailures = 0
+    /// 首次加载是否已完成（用于首屏骨架屏）
+    @Published var initialLoadDone = false
     /// 最近一次失败的控制指令（用于「重试」按钮）
     @Published var lastFailedCommand: (action: String, label: String)?
     @Published var actionText: String?
@@ -640,6 +642,7 @@ final class TeslaAPI: ObservableObject {
             errorText = friendly(error)
             consecutiveRefreshFailures += 1
         }
+        initialLoadDone = true
     }
 
     private func get<T: Decodable>(_ path: String, timeout: TimeInterval = 25) async throws -> T {
