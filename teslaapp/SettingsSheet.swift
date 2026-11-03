@@ -172,12 +172,52 @@ struct SettingsSheet: View {
 struct ActionHistoryView: View {
     @ObservedObject var api: TeslaAPI
 
+    /// 筛选分组
+    enum Filter: String, CaseIterable, Identifiable {
+        case all, lock, climate, charge, drive, other
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .all:     return "全部"
+            case .lock:    return "锁车"
+            case .climate: return "空调"
+            case .charge:  return "充电"
+            case .drive:   return "启动"
+            case .other:   return "其他"
+            }
+        }
+
+        /// 该筛选命中的 action id 集合（nil = 不过滤）
+        var actions: Set<String>? {
+            switch self {
+            case .all:     return nil
+            case .lock:    return ["lock", "unlock", "auto-lock"]
+            case .climate: return ["climate-on", "climate-off"]
+            case .charge:  return ["charge-port-open", "charge-port-close", "charge-start", "charge-stop"]
+            case .drive:   return ["drive", "wake"]
+            case .other:   return ["honk", "flash", "sentry-on", "sentry-off", "trunk-open", "frunk-open"]
+            }
+        }
+    }
+
+    @State private var filter: Filter = .all
+    @State private var onlyFailed = false
+
+    private var filtered: [ActionRecord] {
+        api.actions.filter { a in
+            if onlyFailed && a.ok { return false }
+            guard let set = filter.actions else { return true }
+            return set.contains(a.action)
+        }
+    }
+
     private var grouped: [(String, [ActionRecord])] {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         var order: [String] = []
         var map: [String: [ActionRecord]] = [:]
-        for a in api.actions {
+        for a in filtered {
             let d = Date(timeIntervalSince1970: TimeInterval(a.ts))
             let key = f.string(from: d)
             if map[key] == nil { map[key] = []; order.append(key) }
@@ -188,6 +228,11 @@ struct ActionHistoryView: View {
 
     var body: some View {
         List {
+            Section {
+                filterBar
+                    .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                    .listRowBackground(Color.clear)
+            }
             if let e = api.actionsError {
                 Text(e).font(.app(13)).foregroundColor(.red)
             }
@@ -210,13 +255,63 @@ struct ActionHistoryView: View {
                     }
                 }
             }
-            if api.actions.isEmpty && !api.actionsLoading {
-                Text("还没有操作记录").font(.app(13)).foregroundColor(.secondary)
+            if filtered.isEmpty && !api.actionsLoading {
+                Text(api.actions.isEmpty ? "还没有操作记录" : "没有符合条件的记录")
+                    .font(.app(13)).foregroundColor(.secondary)
             }
         }
         .navigationTitle("操作历史")
         .refreshable { await api.loadActions() }
         .task { if api.actions.isEmpty { await api.loadActions() } }
+    }
+
+    private var filterBar: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 7) {
+                    ForEach(Filter.allCases) { f in
+                        let on = filter == f
+                        Button {
+                            Haptics.tap()
+                            withAnimation(.easeInOut(duration: 0.15)) { filter = on ? .all : f }
+                        } label: {
+                            Text(f.title)
+                                .font(.app(12, on ? .semibold : .regular))
+                                .foregroundColor(on ? L.bg : L.sub)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule().fill(on ? L.sand : L.card)
+                                )
+                                .overlay(
+                                    Capsule().stroke(on ? Color.clear : L.line, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 1)
+            }
+            HStack(spacing: 8) {
+                Button {
+                    Haptics.tap()
+                    withAnimation(.easeInOut(duration: 0.15)) { onlyFailed.toggle() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: onlyFailed ? "checkmark.circle.fill" : "circle")
+                            .font(.app(11))
+                        Text("只看失败").font(.app(11))
+                    }
+                    .foregroundColor(onlyFailed ? L.red : L.dim)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                Text("\(filtered.count) 条")
+                    .font(.app(10))
+                    .foregroundColor(L.dim)
+                    .monospacedDigit()
+            }
+        }
     }
 
     private func row(_ a: ActionRecord) -> some View {
