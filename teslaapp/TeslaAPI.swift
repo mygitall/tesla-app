@@ -137,6 +137,7 @@ struct AskResp: Codable {
     var intent: String?
     var matched: Bool?
     var answer: String?
+    var source: String?        // "rules" = 精确统计，"ai" = 模型推理
     var suggestions: [String]?
 }
 

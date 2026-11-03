@@ -13,6 +13,7 @@ struct AskView: View {
         let id = UUID()
         let mine: Bool
         let text: String
+        var tag: String? = nil       // "AI" 标记
     }
 
     private let suggestions = [
@@ -69,15 +70,24 @@ struct AskView: View {
     private func bubble(_ b: Bubble) -> some View {
         HStack {
             if b.mine { Spacer(minLength: 40) }
-            Text(b.text)
-                .font(.app(13))
-                .foregroundColor(b.mine ? L.bg : L.text)
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(b.mine ? L.sand : L.card)
-                )
+            VStack(alignment: .leading, spacing: 4) {
+                if let tag = b.tag {
+                    HStack(spacing: 3) {
+                        Image(systemName: "sparkles").font(.app(8))
+                        Text(tag).font(.app(9))
+                    }
+                    .foregroundColor(L.sand)
+                }
+                Text(b.text)
+                    .font(.app(13))
+                    .foregroundColor(b.mine ? L.bg : L.text)
+            }
+            .padding(.horizontal, 13)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(b.mine ? L.sand : L.card)
+            )
             if !b.mine { Spacer(minLength: 40) }
         }
     }
@@ -119,7 +129,9 @@ struct AskView: View {
                 let r: AskResp = try await api.ask(question)
                 await MainActor.run {
                     asking = false
-                    history.append(Bubble(mine: false, text: r.answer ?? "暂时答不上来"))
+                    history.append(Bubble(mine: false,
+                                          text: r.answer ?? "暂时答不上来",
+                                          tag: r.source == "ai" ? "AI 推理" : nil))
                 }
             } catch {
                 await MainActor.run {
