@@ -58,9 +58,7 @@ struct HomeView: View {
                     // 首屏骨架屏：首次加载还没完成时，用占位块代替一堆 0 和 --
                     .redacted(reason: skeletonMode ? .placeholder : [])
                     .allowsHitTesting(!skeletonMode)   // 数据没到前不允许点按钮发命令
-                    .opacity(skeletonMode ? 0.55 : 1)
-                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
-                               value: skeletonMode)
+                    .shimmering(skeletonMode)          // 微光扫过（替代原来的整页呼吸）
                 }
             }
             .navigationBarHidden(true)

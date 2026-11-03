@@ -151,3 +151,55 @@ struct LoadErrorCard: View {
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(L.card))
     }
 }
+
+
+// MARK: - 骨架屏微光
+
+struct ShimmerModifier: ViewModifier {
+    var isActive: Bool
+    var duration: Double = 1.5
+
+    @State private var phase: CGFloat = -1
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: Color.white.opacity(0.16), location: 0.45),
+                            .init(color: Color.white.opacity(0.22), location: 0.5),
+                            .init(color: Color.white.opacity(0.16), location: 0.55),
+                            .init(color: .clear, location: 1),
+                        ]),
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                    .frame(width: max(w * 0.55, 120))
+                    .offset(x: phase * (w * 1.5 + 160))
+                    .blendMode(.screen)
+                    .opacity(isActive ? 1 : 0)
+                }
+                .allowsHitTesting(false)
+                .mask(content)
+            )
+            .onAppear { run() }
+            .onChange(of: isActive) { on in if on { run() } }
+    }
+
+    private func run() {
+        guard isActive else { return }
+        phase = -1
+        withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
+            phase = 1
+        }
+    }
+}
+
+extension View {
+    /// 骨架屏微光扫过
+    func shimmering(_ isActive: Bool) -> some View {
+        modifier(ShimmerModifier(isActive: isActive))
+    }
+}
