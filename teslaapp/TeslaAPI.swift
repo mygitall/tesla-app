@@ -132,6 +132,15 @@ struct ActionRecord: Codable, Identifiable {
     var source: String?
 }
 
+struct LastChargeResp: Codable {
+    var ok: Bool?
+    var kwh: Double?
+    var addedKm: Int?
+    var startBattery: Int?
+    var endBattery: Int?
+    var endTs: Int?
+}
+
 struct LastLocResp: Codable {
     var ok: Bool?
     var lat: Double?
@@ -359,6 +368,10 @@ final class TeslaAPI: ObservableObject {
     @Published var lastLon: Double?
     @Published var lastLocTs: Int?
     @Published var lastLocFrame: String?
+    /// 上一次充电摘要（未充电时展示）
+    @Published var lastChargeKwh: Double?
+    @Published var lastChargeAddedKm: Int?
+    @Published var lastChargeEndTs: Int?
     /// 操作历史
     @Published var actions: [ActionRecord] = []
     @Published var actionsError: String?
@@ -998,6 +1011,15 @@ final class TeslaAPI: ObservableObject {
         lastLon = lo
         lastLocTs = r.ts
         lastLocFrame = r.frame
+    }
+
+    /// 拉取上一次充电摘要
+    func loadLastCharge() async {
+        guard let r: LastChargeResp = try? await fetch("/api/charge/last", timeout: 15) else { return }
+        guard r.ok == true else { return }
+        lastChargeKwh = r.kwh
+        lastChargeAddedKm = r.addedKm
+        lastChargeEndTs = r.endTs
     }
 
     /// 操作历史（谁在何时锁车/开空调）

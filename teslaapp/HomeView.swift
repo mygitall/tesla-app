@@ -90,6 +90,7 @@ struct HomeView: View {
         .task {
             ble.start()
             await api.loadLastLocation()
+            await api.loadLastCharge()
             if api.summary == nil { await api.refresh() }
             startAutoRefresh()
         }
@@ -398,6 +399,16 @@ struct HomeView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card))
+    }
+
+    /// "上次充电 49.5 kWh，增加 345 公里"
+    private var lastChargeCaption: String? {
+        guard let kwh = api.lastChargeKwh ?? s?.energyAddedKwh else { return nil }
+        var text = String(format: "上次充电 %.1f kWh", kwh)
+        if let km = api.lastChargeAddedKm ?? s?.addedKm {
+            text += "，增加 \(km) 公里"
+        }
+        return text
     }
 
     private func statusPill(icon: String, text: String, active: Bool) -> some View {
@@ -772,12 +783,20 @@ struct HomeView: View {
                     }
                 } else {
                     // 未充电：显示上限 / 上次充入 / 剩余续航，比一排「—」有用
-                    HStack(spacing: 0) {
-                        metric(s?.chargeLimit.map { "\($0)%" } ?? "—", "充电上限")
-                        vDivider
-                        metric((s?.energyAddedKwh ?? 0) > 0 ? String(format: "%.0f", s!.energyAddedKwh!) : "—", "上次充入 kWh")
-                        vDivider
-                        metric("\(s?.battery ?? 0)%", "当前电量")
+                    VStack(spacing: 6) {
+                        HStack(spacing: 0) {
+                            metric(s?.chargeLimit.map { "\($0)%" } ?? "—", "充电上限")
+                            vDivider
+                            metric("\(s?.battery ?? 0)%", "当前电量")
+                            vDivider
+                            metric("\(s?.rangeKm ?? 0)", "续航 km")
+                        }
+                        if let caption = lastChargeCaption {
+                            Text(caption)
+                                .font(.app(10))
+                                .foregroundColor(L.dim)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                 }
 
