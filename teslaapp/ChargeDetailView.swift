@@ -43,6 +43,7 @@ struct ChargeDetailView: View {
                         onExport: { exportCurve() }
                     )
                     totalsCard
+                    healthCard
                     sessionListCard
                     sourceNote
                     Color.clear.frame(height: 100)
@@ -77,6 +78,7 @@ struct ChargeDetailView: View {
             baselineEditor
         }
         .task {
+            await api.loadBatteryHealth()
             await api.loadChargeMonths()
             await reload()
             await loadCurve(sessionStart: nil)
@@ -277,6 +279,77 @@ struct ChargeDetailView: View {
     }
 
     // MARK: 该期间总数据
+
+    // MARK: 电池健康度
+
+    private var healthCard: some View {
+        let h = api.batteryHealth
+        return LCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("电池健康度")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(L.text)
+                    Spacer()
+                    if let pct = h?.healthPct {
+                        Text(String(format: "%.1f%%", pct))
+                            .font(.system(size: 22, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundColor(pct >= 97 ? L.green : (pct >= 90 ? L.sand : L.red))
+                    } else {
+                        Text("--")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(L.dim)
+                    }
+                }
+
+                // 进度条：99.9% 接近满格
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(L.line)
+                            .frame(height: 6)
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill((h?.healthPct ?? 0) >= 97 ? L.green : L.sand)
+                            .frame(width: geo.size.width * CGFloat(min(100, h?.healthPct ?? 0)) / 100, height: 6)
+                    }
+                }
+                .frame(height: 6)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill").font(.system(size: 9))
+                    Text("满电续航 \(fmt(h?.fullRangeKm)) km · 出厂 \(fmt(h?.nominalRangeKm)) km")
+                        .font(.system(size: 11))
+                }
+                .foregroundColor(L.sub)
+
+                if let hist = h?.history, !hist.isEmpty {
+                    VStack(spacing: 6) {
+                        ForEach(hist.prefix(5), id: \.ts) { pt in
+                            HStack {
+                                Text(pt.day ?? "--")
+                                    .font(.system(size: 11)).foregroundColor(L.dim)
+                                Spacer()
+                                Text("\(pt.battery ?? 0)% 充满")
+                                    .font(.system(size: 11)).foregroundColor(L.dim)
+                                Text("\(fmt(pt.rangeKm)) km")
+                                    .font(.system(size: 11)).monospacedDigit().foregroundColor(L.sub)
+                            }
+                        }
+                    }
+                }
+
+                Text("基于最近 3 次充满电的表显续航推算，仅作参考；官方数据需服务模式")
+                    .font(.system(size: 9.5))
+                    .foregroundColor(L.dim)
+            }
+        }
+    }
+
+    private func fmt(_ v: Double?) -> String {
+        guard let v else { return "--" }
+        return String(format: "%.0f", v)
+    }
 
     private var totalsCard: some View {
         LCard {

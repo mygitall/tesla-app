@@ -82,6 +82,21 @@ struct ChargeCurveResp: Codable {
     var count: Int?
 }
 
+struct BatteryHealth: Codable {
+    var ok: Bool?
+    var nominalRangeKm: Double?
+    var fullRangeKm: Double?
+    var healthPct: Double?
+    var history: [BatteryHealthPoint]?
+}
+
+struct BatteryHealthPoint: Codable {
+    var day: String?
+    var ts: Int?
+    var battery: Int?
+    var rangeKm: Double?
+}
+
 struct ChargeMonthsResp: Codable {
     var months: [ChargeMonth]
     var totalSessions: Int
@@ -629,6 +644,21 @@ final class TeslaAPI: ObservableObject {
             chargeCurvePeak = r.peakPower ?? 0
             return r.points
         } catch { return [] }
+    }
+
+    // MARK: 电池健康度
+
+    @Published var batteryHealth: BatteryHealth?
+
+    func loadBatteryHealth() async {
+        var req = URLRequest(url: url("/api/charge/health"))
+        req.httpMethod = "GET"
+        req.timeoutInterval = 25
+        do {
+            let (data, resp) = try await session.data(for: req)
+            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
+            batteryHealth = try JSONDecoder().decode(BatteryHealth.self, from: data)
+        } catch { }
     }
 
     /// 充电月份列表
