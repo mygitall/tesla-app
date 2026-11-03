@@ -99,6 +99,30 @@ final class TeslaKey: NSObject, ObservableObject {
     }
 
     /// 记录一条蓝牙事件（会持久化，App 被系统杀掉也不丢）
+    /// 一键自检：扫描 → 连接 → 会话握手，逐步报告卡在哪
+    func selfTest() {
+        logEvent("=== 开始自检 ===")
+        wasNear = false
+        cameNearFlag = false
+        detail = "自检中：扫描车辆…"
+        start()
+        beginScan()
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 12_000_000_000)
+            await MainActor.run {
+                guard let self else { return }
+                if self.connected {
+                    self.logEvent("自检 ①扫描 ②连接 ✓（已连接）")
+                } else if self.scanCount > 0 {
+                    self.logEvent("自检 ①扫描 ✓ · ②连接未建立（信号 \(self.lastRSSI)dBm）")
+                } else {
+                    self.logEvent("自检 ①扫描 ✗ 没扫到车辆（检查蓝牙/是否在车旁）")
+                }
+                self.detail = "自检完成，结果见日志"
+            }
+        }
+    }
+
     /// 清空事件日志
     func clearLog() {
         events.removeAll()

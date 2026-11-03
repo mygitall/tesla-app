@@ -688,7 +688,8 @@ struct BleLogSheet: View {
                     Button("关闭") { pm.wrappedValue.dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 14) {
+                    HStack(spacing: 12) {
+                        Button("自检") { ble.selfTest() }
                         Button(copied ? "已复制" : "复制") {
                             UIPasteboard.general.string = ble.exportLog()
                             copied = true

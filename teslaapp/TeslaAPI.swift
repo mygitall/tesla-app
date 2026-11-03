@@ -288,6 +288,8 @@ final class TeslaAPI: ObservableObject {
     @Published var chargeError: String?
     @Published var healthError: String?
     @Published var tripsError: String?
+    /// 行程列表是否还有下一页
+    @Published var tripsHasMore = false
     /// 电价（元/度），来自服务器设置
     @Published var electricityPrice: Double?
     @Published var actionText: String?
@@ -627,13 +629,23 @@ final class TeslaAPI: ObservableObject {
     // MARK: 设置
 
     /// 行程列表
-    func loadTrips() async {
+    /// 分页：append = true 时按已有数量继续取下一页
+    func loadTrips(append: Bool = false) async {
+        guard !tripsLoading else { return }
         tripsLoading = true
         defer { tripsLoading = false }
+        let offset = append ? trips.count : 0
         do {
-            let r: TripsResp = try await fetch("/api/trips?limit=50")
-            trips = r.trips
+            let r: TripsResp = try await fetch("/api/trips?limit=50&offset=\(offset)")
+            if append {
+                // 去重（避免服务器有新行程导致 offset 漂移）
+                let known = Set(trips.map { $0.id })
+                trips += r.trips.filter { !known.contains($0.id) }
+            } else {
+                trips = r.trips
+            }
             tripsTotals = r.totals
+            tripsHasMore = r.trips.count >= 50
             tripsError = nil
         } catch {
             tripsError = friendly(error)

@@ -42,6 +42,25 @@ struct TripsListView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        if api.tripsHasMore {
+                            Button {
+                                Haptics.tap()
+                                Task { await api.loadTrips(append: true) }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    if api.tripsLoading { ProgressView().scaleEffect(0.7) }
+                                    Text(api.tripsLoading ? "加载中…" : "加载更多（已 \(api.trips.count) 条）")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(L.sand)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(L.card))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(api.tripsLoading)
+                            .padding(.horizontal, 16)
+                        }
                     }
                     Color.clear.frame(height: 90)
                 }
