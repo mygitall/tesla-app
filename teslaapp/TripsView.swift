@@ -59,12 +59,31 @@ struct TripsListView: View {
 
     private var summaryCard: some View {
         LCard {
-            HStack(spacing: 0) {
-                stat("\(api.tripsTotals?.count ?? api.trips.count)", "累计行程")
-                divider
-                stat(String(format: "%.0f", api.tripsTotals?.distanceKm ?? api.trips.reduce(0) { $0 + $1.distanceKm }), "累计里程 km")
-                divider
-                stat(totalDurationText, "总时长", small: true)
+            VStack(spacing: 10) {
+                HStack(spacing: 0) {
+                    stat("\(api.tripsTotals?.count ?? api.trips.count)", "累计行程")
+                    divider
+                    stat(String(format: "%.0f", api.tripsTotals?.distanceKm ?? api.trips.reduce(0) { $0 + $1.distanceKm }), "累计里程 km")
+                    divider
+                    stat(totalDurationText, "总时长", small: true)
+                }
+                // 今日合计与首页保持一致，并解释差额来源
+                if let t = api.summary?.today {
+                    Divider().overlay(L.line)
+                    HStack(spacing: 4) {
+                        Text("今日")
+                            .font(.system(size: 11)).foregroundColor(L.sub)
+                        Text(String(format: "%.1f km", t.distanceKm ?? 0))
+                            .font(.system(size: 11, weight: .medium)).monospacedDigit()
+                            .foregroundColor(L.text)
+                        if let gap = t.gapKm, gap >= 0.3 {
+                            Text("· 其中 \(String(format: "%.1f", gap)) km 为未记录短途")
+                                .font(.system(size: 10))
+                                .foregroundColor(L.dim)
+                        }
+                        Spacer()
+                    }
+                }
             }
         }
     }

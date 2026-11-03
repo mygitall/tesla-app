@@ -7,8 +7,10 @@ struct TodayStats: Codable {
     var distanceKm: Double?
     var driveMinutes: Int?
     var energyKwh: Double?
+    var energyEstimated: Bool?    // 能耗是否为估算值
     var cost: Double?
     var trips: Int?
+    var gapKm: Double?            // 里程表比行程记录多出来的公里数
 }
 
 
@@ -149,6 +151,7 @@ struct TripDetailResp: Codable { var track: [TrackPoint] }
 
 struct VehicleSummary: Codable {
     var id: Int64
+    var electricityPrice: Double?
     var name: String?
     var vin: String?
     var state: String
@@ -285,6 +288,8 @@ final class TeslaAPI: ObservableObject {
     @Published var chargeError: String?
     @Published var healthError: String?
     @Published var tripsError: String?
+    /// 电价（元/度），来自服务器设置
+    @Published var electricityPrice: Double?
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
@@ -543,6 +548,7 @@ final class TeslaAPI: ObservableObject {
             let s: VehicleSummary = try await get("/api/app/summary", timeout: 55)
             summary = s
             lastRefreshAt = Date()
+            if let p = s.electricityPrice { electricityPrice = p }
             saveSummaryCache(s)
             if s.dataError != nil {
                 errorText = "车辆数据读取失败，稍后再试"
@@ -744,6 +750,22 @@ final class TeslaAPI: ObservableObject {
             chargeError = nil
         } catch {
             chargeError = friendly(error)
+        }
+    }
+
+    /// 修改电价（元/度）
+    func setElectricityPrice(_ price: Double) async {
+        var req = URLRequest(url: url("/api/settings"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 20
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = Data("{\"electricityPrice\":\(price)}".utf8)
+        do {
+            let (_, resp) = try await session.data(for: req)
+            if let http = resp as? HTTPURLResponse, http.statusCode == 401 { loggedIn = false }
+            await refresh()
+        } catch {
+            errorText = "电价保存失败：\(friendly(error))"
         }
     }
 

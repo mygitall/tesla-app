@@ -6,6 +6,8 @@ struct SettingsSheet: View {
 
     @State private var server = ""
     @State private var saved = false
+    @State private var priceText = ""
+    @State private var priceSaved = false
 
     var body: some View {
         NavigationView {
@@ -24,6 +26,33 @@ struct SettingsSheet: View {
                 }
 
                 Section {
+                    HStack {
+                        Text("电价")
+                        Spacer()
+                        TextField("1.60", text: $priceText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(.system(size: 14, design: .monospaced))
+                            .frame(width: 80)
+                        Text("元/度").foregroundColor(.secondary)
+                    }
+                    Button(priceSaved ? "已保存" : "保存电价") {
+                        if let v = Double(priceText.replacingOccurrences(of: ",", with: ".")), v > 0 {
+                            Task {
+                                await api.setElectricityPrice(v)
+                                priceSaved = true
+                            }
+                        }
+                    }
+                    .disabled(Double(priceText.replacingOccurrences(of: ",", with: ".")) == nil)
+                } header: {
+                    Text("用电成本")
+                } footer: {
+                    Text("用于计算充电花费。不同地区/峰谷电价不同，按你的电费单填写。")
+                        .font(.system(size: 11))
+                }
+
+                Section {
                     Button("恢复默认") {
                         server = "https://www.zhangweiwei.cc"
                     }
@@ -37,7 +66,9 @@ struct SettingsSheet: View {
 
                 Section {
                     HStack {
-                        Text("版本"); Spacer(); Text("1.0").foregroundColor(.secondary)
+                        Text("版本"); Spacer()
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "-")
+                            .foregroundColor(.secondary)
                     }
                     HStack {
                         Text("接口"); Spacer()
@@ -63,7 +94,10 @@ struct SettingsSheet: View {
                     }
                 }
             }
-            .onAppear { server = api.baseURLString }
+            .onAppear {
+                server = api.baseURLString
+                priceText = api.electricityPrice.map { String(format: "%.2f", $0) } ?? "1.60"
+            }
         }
         .preferredColorScheme(.dark)
     }

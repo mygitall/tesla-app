@@ -313,7 +313,8 @@ struct HomeView: View {
             TodayTripCard(
                 distanceKm: s?.today?.distanceKm ?? 0,
                 durationText: durText(s?.today?.driveMinutes),
-                energyKwh: s?.today?.energyKwh ?? 0
+                energyKwh: s?.today?.energyKwh ?? 0,
+                energyEstimated: s?.today?.energyEstimated ?? false
             )
         }
         .buttonStyle(.plain)

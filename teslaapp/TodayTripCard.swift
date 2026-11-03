@@ -5,6 +5,7 @@ struct TodayTripCard: View {
     let distanceKm: Double
     let durationText: String      // 形如 "1:15"
     let energyKwh: Double
+    var energyEstimated: Bool = false
 
     var background: Color = L.card
 
@@ -27,7 +28,7 @@ struct TodayTripCard: View {
                 divider
                 cell(durationText, "小时", leading: 14)
                 divider
-                cell(String(format: "%.0f", energyKwh), "kWh", leading: 14)
+                cell((energyEstimated ? "≈" : "") + String(format: "%.0f", energyKwh), "kWh", leading: 14)
             }
             .padding(.leading, 10)
             .padding(.trailing, -10)
