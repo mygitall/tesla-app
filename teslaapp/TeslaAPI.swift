@@ -358,7 +358,7 @@ final class TeslaAPI: ObservableObject {
     var skeletonMinimum: Double = 0.7
     static let launchTime = Date()
     /// 最近一次失败的控制指令（用于「重试」按钮）
-    @Published var lastFailedCommand: (action: String, label: String)?
+    @Published var lastFailedCommand: (action: String, label: String, body: [String: Any]?)?
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
@@ -746,7 +746,7 @@ final class TeslaAPI: ObservableObject {
 
     // MARK: 指令
 
-    func command(_ action: String, label: String) async {
+    func command(_ action: String, label: String, body: [String: Any]? = nil) async {
         // 卡死自愈：超过 25 秒仍 busy，视为异常并允许重试
         if busy, let t = busySince, Date().timeIntervalSince(t) > 25 {
             busy = false
@@ -763,13 +763,17 @@ final class TeslaAPI: ObservableObject {
         req.httpMethod = "POST"
         req.timeoutInterval = 130          // 车在睡时要先唤醒，可能等 30~60 秒
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data("{}".utf8)
+        if let body, let data = try? JSONSerialization.data(withJSONObject: body) {
+            req.httpBody = data
+        } else {
+            req.httpBody = Data("{}".utf8)
+        }
 
         do {
             let (data, resp) = try await session.data(for: req)
             guard let http = resp as? HTTPURLResponse else {
                 actionText = "✗ 网络异常"; actionIsError = true
-            lastFailedCommand = (action, label)
+            lastFailedCommand = (action, label, body)
             return
             }
             if http.statusCode == 401 {
@@ -787,20 +791,26 @@ final class TeslaAPI: ObservableObject {
                 if msg.count > 60 { msg = String(msg.prefix(60)) + "…" }
                 actionText = "✗ \(msg)"
                 actionIsError = true
-                lastFailedCommand = (action, label)
+                lastFailedCommand = (action, label, body)
             }
         } catch {
             actionText = "✗ \(error.localizedDescription)"
             actionIsError = true
-            lastFailedCommand = (action, label)
+            lastFailedCommand = (action, label, body)
         }
+    }
+
+    /// 设定空调温度（15~28°C）
+    func setTemperature(_ celsius: Double) async {
+        let t = min(28, max(15, celsius))
+        await command("set-temp", label: "温度 \(Int(t))°", body: ["temp": t])
     }
 
     /// 重试最近一次失败的控制指令
     func retryLastCommand() async {
         guard let c = lastFailedCommand else { return }
         lastFailedCommand = nil
-        await command(c.action, label: c.label)
+        await command(c.action, label: c.label, body: c.body)
     }
 
     // MARK: 设置

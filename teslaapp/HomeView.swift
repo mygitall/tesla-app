@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var pendingClimate: Bool?
     /// 无钥匙启动二次确认
     @State private var confirmDrive = false
+    @State private var showMoreActions = false
     /// 离车上锁开关的乐观状态
     @State private var pendingAutoLock: Bool?
     /// 定位失败提示
@@ -107,6 +108,7 @@ struct HomeView: View {
         .onChange(of: api.errorText) { err in
             if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true, kind: .refresh) }
         }
+        .sheet(isPresented: $showMoreActions) { moreActionsSheet }
         .confirmationDialog("无钥匙启动", isPresented: $confirmDrive, titleVisibility: .visible) {
             Button("确认启动（2 分钟内可驾驶）", role: .destructive) {
                 Haptics.tap()
@@ -546,7 +548,136 @@ struct HomeView: View {
                 actionLabel(title: "定位", icon: "location", active: false, enabled: true)
             }
             .buttonStyle(.plain)
+
+            // 更多：后备箱/前备箱/哨兵/充电口/车窗/灯光
+            Button {
+                Haptics.tap()
+                showMoreActions = true
+            } label: {
+                actionLabel(title: "更多", icon: "ellipsis", active: false, enabled: !api.busy)
+            }
+            .buttonStyle(.plain)
+            .disabled(api.busy)
         }
+    }
+
+    /// 更多操作面板
+    private var moreActionsSheet: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 14) {
+                    // 空调温度：只有在空调开启时才显示调节
+                    if isClimateOn || pendingClimate == true {
+                        VStack(spacing: 10) {
+                            HStack {
+                                Image(systemName: "thermometer.medium").font(.app(13)).foregroundColor(L.sand)
+                                Text("空调温度").font(.app(13, .medium)).foregroundColor(L.text)
+                                Spacer()
+                                Text(tempText).font(.app(16, .semibold)).monospacedDigit().foregroundColor(L.text)
+                            }
+                            HStack(spacing: 10) {
+                                tempButton("−2°", delta: -2)
+                                tempButton("+2°", delta: +2)
+                            }
+                        }
+                        .padding(16)
+                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(L.card))
+                    }
+
+                    ForEach(moreGroups, id: \.0) { group, items in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(group).font(.app(11)).foregroundColor(L.dim)
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                                ForEach(items, id: \.id) { item in
+                                    Button {
+                                        Haptics.tap()
+                                        dismissMore()
+                                        Task { await api.command(item.action, label: item.title) }
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: item.icon).font(.app(13)).foregroundColor(L.sand)
+                                            Text(item.title).font(.app(13)).foregroundColor(L.text)
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 12)
+                                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(L.card))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(api.busy)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(16)
+            }
+            .background(L.bg.ignoresSafeArea())
+            .navigationTitle("更多操作")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("关闭") { dismissMore() }
+                }
+            }
+        }
+    }
+
+    private func dismissMore() {
+        showMoreActions = false
+    }
+
+    private func tempButton(_ title: String, delta: Double) -> some View {
+        Button {
+            Haptics.tap()
+            let base = s?.setTemp ?? 22
+            let target = min(28, max(15, base + delta))
+            Task { await api.setTemperature(target) }
+        } label: {
+            Text(title)
+                .font(.app(14, .medium))
+                .foregroundColor(L.text)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(L.card2))
+        }
+        .buttonStyle(.plain)
+        .disabled(api.busy)
+    }
+
+    private var tempText: String {
+        guard let t = s?.setTemp else { return "--°" }
+        return String(format: "%.0f°", t)
+    }
+
+    private struct MoreItem: Identifiable {
+        let id: String
+        let title: String
+        let icon: String
+        let action: String
+    }
+
+    private var moreGroups: [(String, [MoreItem])] {
+        [
+            ("车身", [
+                MoreItem(id: "trunk", title: "后备箱", icon: "car.side.rear.open", action: "trunk-open"),
+                MoreItem(id: "frunk", title: "前备箱", icon: "car.side.front.open", action: "frunk-open"),
+                MoreItem(id: "vent", title: "开窗通风", icon: "wind", action: "windows-vent"),
+                MoreItem(id: "closewin", title: "关闭车窗", icon: "arrow.down.to.line", action: "windows-close"),
+            ]),
+            ("灯光与安全", [
+                MoreItem(id: "flash", title: "闪灯找车", icon: "light.beacon.max", action: "flash"),
+                MoreItem(id: "honk", title: "鸣笛", icon: "speaker.wave.2.fill", action: "honk"),
+                MoreItem(id: "sentry-on", title: "开哨兵", icon: "shield.lefthalf.filled", action: "sentry-on"),
+                MoreItem(id: "sentry-off", title: "关哨兵", icon: "shield.slash", action: "sentry-off"),
+            ]),
+            ("充电", [
+                MoreItem(id: "port-open", title: "开充电口", icon: "bolt.car.fill", action: "charge-port-open"),
+                MoreItem(id: "port-close", title: "关充电口", icon: "bolt.car", action: "charge-port-close"),
+                MoreItem(id: "charge-start", title: "开始充电", icon: "play.fill", action: "charge-start"),
+                MoreItem(id: "charge-stop", title: "停止充电", icon: "stop.fill", action: "charge-stop"),
+            ]),
+        ]
     }
 
     /// 统一的按钮外观（执行中会变暗 + 缩小）
