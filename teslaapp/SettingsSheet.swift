@@ -82,6 +82,23 @@ struct SettingsSheet: View {
 
                 Section {
                     NavigationLink {
+                        HomeLayoutEditor()
+                    } label: {
+                        HStack {
+                            Text("首页布局")
+                            Spacer()
+                            Text("折叠 / 排序").font(.system(size: 12)).foregroundColor(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("界面")
+                } footer: {
+                    Text("也可以直接长按首页卡片来折叠、移动或隐藏。")
+                        .font(.system(size: 11))
+                }
+
+                Section {
+                    NavigationLink {
                         CrashLogView()
                     } label: {
                         HStack {
@@ -280,5 +297,61 @@ struct CrashLogView: View {
             }
         }
         .onAppear { text = CrashLogger.read() }
+    }
+}
+
+
+// MARK: - 首页布局编辑
+
+struct HomeLayoutEditor: View {
+    @StateObject private var layout = HomeLayout.shared
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(layout.order, id: \.self) { id in
+                    HStack(spacing: 10) {
+                        Image(systemName: layout.icon(id))
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                            .frame(width: 18)
+                        Text(layout.title(id))
+                            .foregroundColor(layout.hidden.contains(id) ? .secondary : .primary)
+                        Spacer()
+                        if layout.collapsed.contains(id) {
+                            Text("已折叠").font(.system(size: 10)).foregroundColor(.orange)
+                        }
+                        Button {
+                            layout.move(id, by: -1)
+                        } label: { Image(systemName: "chevron.up") }
+                            .buttonStyle(.plain)
+                            .disabled(layout.order.first == id)
+                        Button {
+                            layout.move(id, by: 1)
+                        } label: { Image(systemName: "chevron.down") }
+                            .buttonStyle(.plain)
+                            .disabled(layout.order.last == id)
+                        Button {
+                            layout.toggleHidden(id)
+                        } label: {
+                            Image(systemName: layout.hidden.contains(id) ? "eye.slash" : "eye")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            } header: {
+                Text("卡片顺序")
+            } footer: {
+                Text("眼睛图标控制显示/隐藏。隐藏后可在同一位置点回来。")
+                    .font(.system(size: 11))
+            }
+
+            Section {
+                Button("恢复默认布局") {
+                    layout.reset()
+                }
+            }
+        }
+        .navigationTitle("首页布局")
     }
 }

@@ -16,6 +16,7 @@
 		40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */; };
 		4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */; };
 		4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */; };
+		5418C7470E8760CDE458FE72131778CA /* HomeLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596A752C914BDD4BAA6D8469CA589209 /* HomeLayout.swift */; };
 		69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */; };
 		77C064DA5C685191817AE33DF6B857A3 /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2196F5206D306446AD5B5052879E816 /* CrashLogger.swift */; };
 		7FD866AF7F79D1E411500F7E9EB5A87D /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */; };
@@ -43,6 +44,7 @@
 		483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		53E22F8492B612726059C9E878784B2D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		596A752C914BDD4BAA6D8469CA589209 /* HomeLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeLayout.swift; sourceTree = "<group>"; };
 		5A2A12F3CD147544314F61FE6F8B8B42 /* TeslaBLE.xcframework */ = {isa = PBXFileReference; name = TeslaBLE.xcframework; path = Frameworks/TeslaBLE.xcframework; sourceTree = "<group>"; };
 		6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerCard.swift; sourceTree = "<group>"; };
 		68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeDetailView.swift; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 				D6D6C79B0FB661C73F890F02BDB52820 /* ContentView.swift */,
 				C2196F5206D306446AD5B5052879E816 /* CrashLogger.swift */,
 				9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */,
+				596A752C914BDD4BAA6D8469CA589209 /* HomeLayout.swift */,
 				53E22F8492B612726059C9E878784B2D /* HomeView.swift */,
 				C9D3D4D0B459E1539B7FFC83C4D17E7A /* Info.plist */,
 				A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */,
@@ -213,6 +216,7 @@
 				A78ED4EFBCA5B7FBCD8AA5964614BBC9 /* ContentView.swift in Sources */,
 				77C064DA5C685191817AE33DF6B857A3 /* CrashLogger.swift in Sources */,
 				7FD866AF7F79D1E411500F7E9EB5A87D /* Haptics.swift in Sources */,
+				5418C7470E8760CDE458FE72131778CA /* HomeLayout.swift in Sources */,
 				B7385AC6CBDEAD91C779814F9C0724D6 /* HomeView.swift in Sources */,
 				40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */,
 				B2F0334CF48D5A945C25AC0BACB9C0DD /* LoginView.swift in Sources */,

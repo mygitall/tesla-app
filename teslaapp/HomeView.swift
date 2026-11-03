@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showBleLog = false
     /// 乐观锁状态：点下去立刻切换视觉，等服务器确认后清空
+    @StateObject private var layout = HomeLayout.shared
     @State private var pendingLock: Bool?
     /// 乐观空调状态
     @State private var pendingClimate: Bool?
@@ -45,12 +46,11 @@ struct HomeView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
                         titleBlock
-                        carSection
-                        batteryCard
-                        todayCard
-                        actionRow
-                        chargingCard
-                        phoneKeyCard
+                        ForEach(layout.order, id: \.self) { id in
+                            if !layout.hidden.contains(id) {
+                                cardSlot(id)
+                            }
+                        }
                         Color.clear.frame(height: 180)   // 底部留白：让最后一张卡能滚到标签栏之上
                     }
                     .padding(.horizontal, hPad)
@@ -145,6 +145,75 @@ struct HomeView: View {
     }
 
     // MARK: 标题
+
+    /// 一张卡：正常显示 / 折叠成一条 / 长按可折叠·移动·隐藏
+    @ViewBuilder
+    private func cardSlot(_ id: String) -> some View {
+        if layout.collapsed.contains(id) {
+            collapsedBar(id)
+        } else {
+            cardContent(id)
+                .contextMenu {
+                    Button {
+                        Haptics.tap(); layout.toggleCollapse(id)
+                    } label: { Label("折叠", systemImage: "rectangle.compress.vertical") }
+                    Button {
+                        Haptics.tap(); layout.move(id, by: -1)
+                    } label: { Label("上移", systemImage: "arrow.up") }
+                    Button {
+                        Haptics.tap(); layout.move(id, by: 1)
+                    } label: { Label("下移", systemImage: "arrow.down") }
+                    Button(role: .destructive) {
+                        Haptics.tap(); layout.toggleHidden(id)
+                    } label: { Label("隐藏", systemImage: "eye.slash") }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func cardContent(_ id: String) -> some View {
+        switch HomeLayout.Card(rawValue: id) {
+        case .car:      carSection
+        case .battery:  batteryCard
+        case .today:    todayCard
+        case .actions:  actionRow
+        case .charging: chargingCard
+        case .phoneKey: phoneKeyCard
+        case nil:       EmptyView()
+        }
+    }
+
+    /// 折叠后的细条：点一下展开
+    private func collapsedBar(_ id: String) -> some View {
+        Button {
+            Haptics.tap()
+            withAnimation(.easeInOut(duration: 0.18)) { layout.toggleCollapse(id) }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: layout.icon(id))
+                    .font(.app(12))
+                    .foregroundColor(L.sand.opacity(0.9))
+                Text(layout.title(id))
+                    .font(.app(12, .medium))
+                    .foregroundColor(L.sub)
+                Spacer()
+                Text("展开").font(.app(10)).foregroundColor(L.dim)
+                Image(systemName: "chevron.down")
+                    .font(.app(9, .semibold))
+                    .foregroundColor(L.dim)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: cardRadius, style: .continuous).fill(L.card.opacity(0.7)))
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button { layout.move(id, by: -1) } label: { Label("上移", systemImage: "arrow.up") }
+            Button { layout.move(id, by: 1) } label: { Label("下移", systemImage: "arrow.down") }
+            Button { layout.toggleCollapse(id) } label: { Label("展开", systemImage: "rectangle.expand.vertical") }
+            Button(role: .destructive) { layout.toggleHidden(id) } label: { Label("隐藏", systemImage: "eye.slash") }
+        }
+    }
 
     private var titleBlock: some View {
         HStack(alignment: .top) {
