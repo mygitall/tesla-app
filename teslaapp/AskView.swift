@@ -19,7 +19,18 @@ struct AskView: View {
     private let suggestions = [
         "上个月总里程", "今日充电数据", "本月充电多少次",
         "今天电耗多少", "上次充电", "这个月花了多少电费",
+        "我该多久充一次电", "冬天续航掉得厉害正常吗",
     ]
+
+    /// 能问什么（分组示例，点一下直接问）
+    private let helpGroups: [(String, [String])] = [
+        ("里程", ["今天开了多少公里", "本周里程", "上个月总里程", "今年一共开了多少"]),
+        ("充电", ["今日充电数据", "本月充电多少次", "上次充电", "本月充了多少度电"]),
+        ("能耗与花费", ["今天电耗多少", "本月百公里电耗", "这个月花了多少电费", "上月电费"]),
+        ("建议类（会结合你的数据）", ["我该多久充一次电", "该充到 90% 还是 100%", "冬天续航掉得厉害正常吗"]),
+    ]
+
+    @State private var showHelp = false
 
     var body: some View {
         NavigationView {
@@ -59,11 +70,41 @@ struct AskView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("可以直接问我")
-                .font(.app(12)).foregroundColor(L.dim)
+            HStack(spacing: 6) {
+                Text("可以直接问我").font(.app(12)).foregroundColor(L.dim)
+                Spacer()
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) { showHelp.toggle() }
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "questionmark.circle").font(.app(10))
+                        Text("能问什么？").font(.app(11))
+                    }
+                    .foregroundColor(L.sand)
+                }
+                .buttonStyle(.plain)
+            }
+
             FlowChips(items: suggestions) { s in ask(s) }
-            Text("例如「上个月总里程」「今日充电数据」")
-                .font(.app(11)).foregroundColor(L.dim)
+
+            if showHelp {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(helpGroups, id: \.0) { group, items in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(group).font(.app(11, .medium)).foregroundColor(L.sub)
+                            FlowChips(items: items) { s in ask(s) }
+                        }
+                    }
+                    Text("范围说明：只回答与你这辆车数据相关的问题；天气、新闻、闲聊会礼貌拒绝（省钱也防止瞎编）。")
+                        .font(.app(10))
+                        .foregroundColor(L.dim)
+                }
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(L.card.opacity(0.6)))
+            } else {
+                Text("例如「上个月总里程」「今日充电数据」")
+                    .font(.app(11)).foregroundColor(L.dim)
+            }
         }
     }
 
@@ -120,6 +161,14 @@ struct AskView: View {
     private func ask(_ q: String) {
         let question = q.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !asking else { return }
+        // 输入太短（比如一个字母）：本地提示，不浪费一次网络/模型调用
+        if question.count < 2 {
+            Haptics.error()
+            history.append(Bubble(mine: true, text: question))
+            history.append(Bubble(mine: false, text: "问完整一点，比如「本月总里程」「今日充电数据」。点右上「能问什么？」能看到全部可问范围。"))
+            input = ""
+            return
+        }
         Haptics.tap()
         history.append(Bubble(mine: true, text: question))
         input = ""
