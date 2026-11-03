@@ -1028,7 +1028,16 @@ final class TeslaAPI: ObservableObject {
         req.httpMethod = "POST"
         req.timeoutInterval = 25
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: ["q": question])
+        // 把当前车况一并带上：模型回答「充到 100 还是 80」这类问题需要电量/续航/状态
+        var payload: [String: Any] = ["q": question]
+        if let cur = summary {
+            if let b = cur.battery { payload["battery"] = b }
+            if let r = cur.rangeKm { payload["rangeKm"] = r }
+            payload["state"] = cur.state
+            if let cl = cur.chargeLimit { payload["chargeLimit"] = cl }
+            if let ch = cur.charging { payload["charging"] = ch }
+        }
+        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
         let (data, resp) = try await session.data(for: req)
         if let http = resp as? HTTPURLResponse, http.statusCode == 401 { loggedIn = false }
         return try JSONDecoder().decode(AskResp.self, from: data)
