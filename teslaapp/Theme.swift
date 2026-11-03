@@ -82,7 +82,11 @@ enum TypoScale {
         }
     }
 
+    private static var started = false
+
     static func start() {
+        guard !started else { return }      // 幂等：重复调用不会重复注册
+        started = true
         apply(UIApplication.shared.preferredContentSizeCategory)
         NotificationCenter.default.addObserver(
             forName: UIContentSizeCategory.didChangeNotification,
@@ -102,6 +106,12 @@ enum TypoScale {
 }
 
 extension Font {
+    /// 空间受限处（图表/轴标签）用：放大比例有上限
+    static func appCapped(_ size: CGFloat, _ weight: Font.Weight = .regular,
+                          cap: CGFloat = 1.12) -> Font {
+        .system(size: size * min(TypoScale.factor(size), cap), weight: weight)
+    }
+
     /// 支持动态字体的系统字体
     static func app(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size * TypoScale.factor(size), weight: weight)

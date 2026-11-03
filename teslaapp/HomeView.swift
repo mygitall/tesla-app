@@ -628,7 +628,8 @@ struct HomeView: View {
                     Text(t.text)
                         .font(.app(11.5))
                         .foregroundColor(L.text)
-                        .lineLimit(2)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     if t.isError, t.kind == .command, api.lastFailedCommand != nil {
                         Button {

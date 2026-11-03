@@ -158,7 +158,7 @@ struct ChargeDetailView: View {
                 // 原来这里有个加载菊花（ProgressView）：出现/消失会改变行高，
                 // 导致整页上下抖动，已去掉；加载状态改用不改变布局的方式表达。
             }
-            .frame(height: 20)
+            .frame(height: 20 * TypoScale.factor(11))
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -188,7 +188,7 @@ struct ChargeDetailView: View {
                  : " ")
                 .font(.app(11))
                 .foregroundColor(L.sub)
-                .frame(height: 14)
+                .frame(height: 14 * TypoScale.factor(11))
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -245,7 +245,7 @@ struct ChargeDetailView: View {
                     .font(.app(11))
                     .foregroundColor(L.sub)
                     .opacity(s?.chargeLimit == nil ? 0 : 1)
-                    .frame(height: 14)
+                    .frame(height: 14 * TypoScale.factor(11))
             }
             .frame(maxWidth: .infinity)
         }
@@ -318,7 +318,7 @@ struct ChargeDetailView: View {
                             .foregroundColor(L.dim)
                     }
                 }
-                .frame(height: 30)
+                .frame(height: 30 * TypoScale.factor(13))
 
                 // 进度条：99.9% 接近满格
                 GeometryReader { geo in
@@ -339,7 +339,7 @@ struct ChargeDetailView: View {
                         .font(.app(11))
                 }
                 .foregroundColor(L.sub)
-                .frame(height: 16)
+                .frame(height: 16 * TypoScale.factor(11))
 
                 // 固定 5 行：数据没到时用占位，保证卡片高度不随加载变化（消除页面抖动）
                 VStack(spacing: 6) {
@@ -359,7 +359,7 @@ struct ChargeDetailView: View {
                                 .monospacedDigit()
                                 .foregroundColor(pt == nil ? L.sub.opacity(0.35) : L.sub)
                         }
-                        .frame(height: 14)
+                        .frame(height: 14 * TypoScale.factor(11))
                     }
                 }
 

@@ -67,14 +67,14 @@ struct ChargeCurveView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            Image(systemName: "bolt.fill").font(.app(12)).foregroundColor(L.orange)
-            Text("充电曲线").font(.app(13, .semibold)).foregroundColor(L.text)
+            Image(systemName: "bolt.fill").font(.appCapped(12)).foregroundColor(L.orange)
+            Text("充电曲线").font(.appCapped(13, .semibold)).foregroundColor(L.text)
             Spacer()
             if !valid.isEmpty {
                 Button(action: onExport) {
                     HStack(spacing: 3) {
-                        Image(systemName: "square.and.arrow.up").font(.app(10))
-                        Text("导出").font(.app(10))
+                        Image(systemName: "square.and.arrow.up").font(.appCapped(10))
+                        Text("导出").font(.appCapped(10))
                     }
                     .foregroundColor(L.blue)
                 }
@@ -94,10 +94,10 @@ struct ChargeCurveView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(dateText(s.startTs))
-                                .font(.app(10, (active ? .semibold : .regular)))
+                                .font(.appCapped(10, (active ? .semibold : .regular)))
                                 .foregroundColor(active ? Color(hex: 0x151717) : L.text)
                             Text("\(s.startBattery ?? 0)%→\(s.endBattery ?? 0)% · \(String(format: "%.1f", s.energyKwh))度")
-                                .font(.app(8))
+                                .font(.appCapped(8))
                                 .foregroundColor(active ? Color(hex: 0x151717).opacity(0.7) : L.sub)
                         }
                         .padding(.horizontal, 9).padding(.vertical, 5)
@@ -117,7 +117,7 @@ struct ChargeCurveView: View {
                 ForEach(XMode.allCases, id: \.self) { m in
                     Button { xMode = m } label: {
                         Text(m.rawValue)
-                            .font(.app(10, (xMode == m ? .semibold : .regular)))
+                            .font(.appCapped(10, (xMode == m ? .semibold : .regular)))
                             .foregroundColor(xMode == m ? Color(hex: 0x151717) : L.text)
                             .padding(.horizontal, 10).padding(.vertical, 4)
                             .background(Capsule().fill(xMode == m ? L.text.opacity(0.85) : L.fill))
@@ -134,7 +134,7 @@ struct ChargeCurveView: View {
                     } label: {
                         HStack(spacing: 3) {
                             Circle().fill(s.color).frame(width: 5, height: 5)
-                            Text(s.rawValue).font(.app(10))
+                            Text(s.rawValue).font(.appCapped(10))
                                 .foregroundColor(series.contains(s) ? L.text : L.sub)
                         }
                         .padding(.horizontal, 8).padding(.vertical, 4)
@@ -198,12 +198,12 @@ struct ChargeCurveView: View {
 
     private var axis: some View {
         HStack {
-            Text(leftLabel).font(.app(9)).foregroundColor(L.sub)
+            Text(leftLabel).font(.appCapped(9)).foregroundColor(L.sub)
             Spacer()
             Text(xMode == .soc ? "电量 →" : "时间 →")
-                .font(.app(9)).foregroundColor(L.sub.opacity(0.7))
+                .font(.appCapped(9)).foregroundColor(L.sub.opacity(0.7))
             Spacer()
-            Text(rightLabel).font(.app(9)).foregroundColor(L.sub)
+            Text(rightLabel).font(.appCapped(9)).foregroundColor(L.sub)
         }
     }
 
@@ -226,23 +226,23 @@ struct ChargeCurveView: View {
                     HStack(spacing: 3) {
                         Circle().fill(s.color).frame(width: 5, height: 5)
                         Text("\(s.rawValue) \(String(format: "%.1f", maxOf(s)))\(s.unit)")
-                            .font(.app(9)).foregroundColor(L.sub)
+                            .font(.appCapped(9)).foregroundColor(L.sub)
                     }
                 }
             }
             Spacer()
-            Text("\(valid.count) 点").font(.app(9)).foregroundColor(L.sub.opacity(0.7))
+            Text("\(valid.count) 点").font(.appCapped(9)).foregroundColor(L.sub.opacity(0.7))
         }
     }
 
     private var emptyHint: some View {
         VStack(spacing: 6) {
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.app(22)).foregroundColor(L.sub)
+                .font(.appCapped(22)).foregroundColor(L.sub)
             Text("这次充电的数据点太少，画不出曲线")
-                .font(.app(11)).foregroundColor(L.text)
+                .font(.appCapped(11)).foregroundColor(L.text)
             Text("下次充电时每 20 秒采一个点，曲线会完整")
-                .font(.app(9)).foregroundColor(L.sub)
+                .font(.appCapped(9)).foregroundColor(L.sub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
