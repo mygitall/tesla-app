@@ -50,6 +50,7 @@ struct ChargeDetailView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
+                .transaction { $0.animation = nil }
             }
         }
         .navigationTitle("充电详情")
@@ -169,10 +170,14 @@ struct ChargeDetailView: View {
                 .padding(.vertical, 2)
             }
 
-            if api.chargeMonths.isEmpty {
-                Text("还没有充电记录（插枪充电后自动统计）")
-                    .font(.system(size: 11)).foregroundColor(L.sub)
-            }
+            // 固定高度：这行文字出现/消失会让上方卡片变高变矮，
+            // 进而导致整页内容上下跳动（加载完成后「抖一下」的根因）
+            Text(api.chargeMonths.isEmpty
+                 ? (api.chargeLoading ? "加载中…" : "还没有充电记录（插枪充电后自动统计）")
+                 : " ")
+                .font(.system(size: 11))
+                .foregroundColor(L.sub)
+                .frame(height: 14)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -225,11 +230,11 @@ struct ChargeDetailView: View {
                         .foregroundColor(isCharging ? L.orange : L.sub)
                 }
 
-                if let limit = s?.chargeLimit {
-                    Text("充电上限 \(limit)%")
-                        .font(.system(size: 11))
-                        .foregroundColor(L.sub)
-                }
+                Text(s?.chargeLimit.map { "充电上限 \($0)%" } ?? " ")
+                    .font(.system(size: 11))
+                    .foregroundColor(L.sub)
+                    .opacity(s?.chargeLimit == nil ? 0 : 1)
+                    .frame(height: 14)
             }
             .frame(maxWidth: .infinity)
         }
@@ -302,6 +307,7 @@ struct ChargeDetailView: View {
                             .foregroundColor(L.dim)
                     }
                 }
+                .frame(height: 30)
 
                 // 进度条：99.9% 接近满格
                 GeometryReader { geo in
@@ -322,20 +328,27 @@ struct ChargeDetailView: View {
                         .font(.system(size: 11))
                 }
                 .foregroundColor(L.sub)
+                .frame(height: 16)
 
-                if let hist = h?.history, !hist.isEmpty {
-                    VStack(spacing: 6) {
-                        ForEach(hist.prefix(5), id: \.ts) { pt in
-                            HStack {
-                                Text(pt.day ?? "--")
-                                    .font(.system(size: 11)).foregroundColor(L.dim)
-                                Spacer()
-                                Text("\(pt.battery ?? 0)% 充满")
-                                    .font(.system(size: 11)).foregroundColor(L.dim)
-                                Text("\(fmt(pt.rangeKm)) km")
-                                    .font(.system(size: 11)).monospacedDigit().foregroundColor(L.sub)
-                            }
+                // 固定 5 行：数据没到时用占位，保证卡片高度不随加载变化（消除页面抖动）
+                VStack(spacing: 6) {
+                    let hist = h?.history ?? []
+                    ForEach(0..<5, id: \.self) { i in
+                        let pt: BatteryHealthPoint? = i < hist.count ? hist[i] : nil
+                        HStack {
+                            Text(pt?.day ?? "—")
+                                .font(.system(size: 11))
+                                .foregroundColor(pt == nil ? L.dim.opacity(0.35) : L.dim)
+                            Spacer()
+                            Text(pt.map { "\($0.battery ?? 0)% 充满" } ?? "—")
+                                .font(.system(size: 11))
+                                .foregroundColor(pt == nil ? L.dim.opacity(0.35) : L.dim)
+                            Text(pt.map { "\(self.fmt($0.rangeKm)) km" } ?? "—")
+                                .font(.system(size: 11))
+                                .monospacedDigit()
+                                .foregroundColor(pt == nil ? L.sub.opacity(0.35) : L.sub)
                         }
+                        .frame(height: 14)
                     }
                 }
 
