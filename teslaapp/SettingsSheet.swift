@@ -256,13 +256,52 @@ struct ActionHistoryView: View {
                 }
             }
             if filtered.isEmpty && !api.actionsLoading {
-                Text(api.actions.isEmpty ? "还没有操作记录" : "没有符合条件的记录")
-                    .font(.app(13)).foregroundColor(.secondary)
+                if api.actions.isEmpty {
+                    Text("还没有操作记录").font(.app(13)).foregroundColor(.secondary)
+                } else {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(api.actionsHasMore
+                             ? "当前已加载的记录里没有符合条件的结果"
+                             : "没有符合条件的记录")
+                            .font(.app(13)).foregroundColor(.secondary)
+                        HStack(spacing: 10) {
+                            if api.actionsHasMore {
+                                Button("继续查找更多") {
+                                    Task { await loadMoreUntilMatch() }
+                                }
+                                .font(.app(13, .medium))
+                                .foregroundColor(L.sand)
+                            }
+                            Button("清除筛选") {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    filter = .all
+                                    onlyFailed = false
+                                }
+                            }
+                            .font(.app(13))
+                            .foregroundColor(L.sub)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
             }
         }
         .navigationTitle("操作历史")
         .refreshable { await api.loadActions() }
         .task { if api.actions.isEmpty { await api.loadActions() } }
+        .onChange(of: filter) { _ in Task { await loadMoreUntilMatch() } }
+        .onChange(of: onlyFailed) { _ in Task { await loadMoreUntilMatch() } }
+    }
+
+    /// 当前筛选没有结果时，自动继续拉取，最多 5 页
+    private func loadMoreUntilMatch() async {
+        guard filtered.isEmpty else { return }
+        var guardCount = 0
+        while filtered.isEmpty && api.actionsHasMore && guardCount < 5 {
+            guardCount += 1
+            await api.loadActions(append: true)
+            if api.actionsLoading { break }
+        }
     }
 
     private var filterBar: some View {

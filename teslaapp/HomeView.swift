@@ -52,6 +52,26 @@ struct HomeView: View {
                                 cardSlot(id)
                             }
                         }
+                        if !layout.hidden.isEmpty {
+                            Button {
+                                Haptics.tap()
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    for id in layout.hidden { layout.toggleHidden(id) }
+                                }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "eye.slash").font(.app(10))
+                                    Text("已隐藏 \(layout.hidden.count) 张卡片 · 恢复")
+                                        .font(.app(11))
+                                }
+                                .foregroundColor(L.dim)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(L.card.opacity(0.6)))
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         Color.clear.frame(height: 180)   // 底部留白：让最后一张卡能滚到标签栏之上
                     }
                     .padding(.horizontal, hPad)

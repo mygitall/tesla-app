@@ -164,7 +164,9 @@ struct ShimmerModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay(
-                GeometryReader { geo in
+                Group {
+                    if isActive {
+                        GeometryReader { geo in
                     let w = geo.size.width
                     LinearGradient(
                         gradient: Gradient(stops: [
@@ -178,14 +180,24 @@ struct ShimmerModifier: ViewModifier {
                     )
                     .frame(width: max(w * 0.55, 120))
                     .offset(x: phase * (w * 1.5 + 160))
-                    .blendMode(.screen)
-                    .opacity(isActive ? 1 : 0)
+                            .blendMode(.screen)
+                        }
+                        .allowsHitTesting(false)
+                        .mask(content)
+                    }
                 }
-                .allowsHitTesting(false)
-                .mask(content)
             )
             .onAppear { run() }
-            .onChange(of: isActive) { on in if on { run() } }
+            .onChange(of: isActive) { on in
+                if on {
+                    run()
+                } else {
+                    // 停止：归位并取消动画，避免骨架结束后还在空转
+                    var t = Transaction()
+                    t.disablesAnimations = true
+                    withTransaction(t) { phase = -1 }
+                }
+            }
     }
 
     private func run() {
