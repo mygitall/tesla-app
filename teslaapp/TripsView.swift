@@ -27,6 +27,12 @@ struct TripsListView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
                     summaryCard
+                    if let e = api.tripsError {
+                        LoadErrorCard(message: e) {
+                            Task { await api.loadTrips() }
+                        }
+                        .padding(.horizontal, 16)
+                    }
                     if api.trips.isEmpty {
                         emptyCard
                     } else {

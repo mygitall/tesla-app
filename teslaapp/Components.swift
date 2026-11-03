@@ -109,3 +109,45 @@ struct ActionButton: View {
         .opacity(disabled ? 0.4 : 1)
     }
 }
+
+
+/// 加载失败提示卡：说明原因 + 一键重试
+struct LoadErrorCard: View {
+    let message: String
+    var retry: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13))
+                .foregroundColor(L.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("加载失败")
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundColor(L.text)
+                Text(message)
+                    .font(.system(size: 11))
+                    .foregroundColor(L.sub)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 8)
+            Button {
+                Haptics.tap()
+                retry()
+            } label: {
+                Text("重试")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(L.sand)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule().stroke(L.sand.opacity(0.5), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(L.card))
+    }
+}

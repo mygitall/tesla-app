@@ -281,6 +281,10 @@ final class TeslaAPI: ObservableObject {
     /// 最后一次成功刷新的本地时间
     @Published var lastRefreshAt: Date?
     @Published var errorText: String?
+    /// 各页面加载失败提示（加载成功会清空）
+    @Published var chargeError: String?
+    @Published var healthError: String?
+    @Published var tripsError: String?
     @Published var actionText: String?
     @Published var chargeMonths: [ChargeMonth] = []
     @Published var chargeSummary: ChargeSummaryResp?
@@ -350,6 +354,40 @@ final class TeslaAPI: ObservableObject {
 
     private func url(_ path: String) -> URL {
         URL(string: path, relativeTo: baseURL) ?? baseURL
+    }
+
+    /// 把任意错误翻成给用户看的一句话
+    private func friendly(_ error: Error) -> String {
+        if let e = error as? APIError {
+            switch e {
+            case .unauthorized: return "登录已过期，请重新登录"
+            case .message(let m): return m
+            }
+        }
+        let ns = error as NSError
+        if ns.domain == NSURLErrorDomain {
+            switch ns.code {
+            case NSURLErrorNotConnectedToInternet: return "没有网络连接"
+            case NSURLErrorTimedOut: return "请求超时（服务器或车辆响应慢）"
+            case NSURLErrorCannotConnectToHost, NSURLErrorCannotFindHost: return "连不上服务器"
+            default: break
+            }
+        }
+        return error.localizedDescription
+    }
+
+    /// 统一的 JSON 请求：非 200 也当作错误抛出（之前直接 return，用户什么都看不到）
+    private func fetch<T: Decodable>(_ path: String, timeout: TimeInterval = 25) async throws -> T {
+        var req = URLRequest(url: url(path))
+        req.httpMethod = "GET"
+        req.timeoutInterval = timeout
+        let (data, resp) = try await session.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.message("网络异常") }
+        if http.statusCode == 401 { loggedIn = false; throw APIError.unauthorized }
+        guard http.statusCode == 200 else {
+            throw APIError.message("服务器返回 \(http.statusCode)")
+        }
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
     private func hasSessionCookie() -> Bool {
@@ -586,17 +624,13 @@ final class TeslaAPI: ObservableObject {
     func loadTrips() async {
         tripsLoading = true
         defer { tripsLoading = false }
-        var req = URLRequest(url: url("/api/trips?limit=50"))
-        req.httpMethod = "GET"
-        req.timeoutInterval = 25
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
-            let r = try JSONDecoder().decode(TripsResp.self, from: data)
+            let r: TripsResp = try await fetch("/api/trips?limit=50")
             trips = r.trips
             tripsTotals = r.totals
+            tripsError = nil
         } catch {
-            actionText = "行程加载失败：\(error.localizedDescription)"
+            tripsError = friendly(error)
         }
     }
 
@@ -634,16 +668,14 @@ final class TeslaAPI: ObservableObject {
     func loadChargeCurve(start: Int? = nil, end: Int? = nil) async -> [ChargeCurvePoint] {
         var path = "/api/charge/curve"
         if let start, let end { path += "?start=\(start)&end=\(end)" }
-        var req = URLRequest(url: url(path))
-        req.httpMethod = "GET"
-        req.timeoutInterval = 25
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return [] }
-            let r = try JSONDecoder().decode(ChargeCurveResp.self, from: data)
+            let r: ChargeCurveResp = try await fetch(path)
             chargeCurvePeak = r.peakPower ?? 0
             return r.points
-        } catch { return [] }
+        } catch {
+            chargeError = friendly(error)
+            return []
+        }
     }
 
     // MARK: 电池健康度
@@ -651,14 +683,12 @@ final class TeslaAPI: ObservableObject {
     @Published var batteryHealth: BatteryHealth?
 
     func loadBatteryHealth() async {
-        var req = URLRequest(url: url("/api/charge/health"))
-        req.httpMethod = "GET"
-        req.timeoutInterval = 25
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
-            batteryHealth = try JSONDecoder().decode(BatteryHealth.self, from: data)
-        } catch { }
+            batteryHealth = try await fetch("/api/charge/health")
+            healthError = nil
+        } catch {
+            healthError = friendly(error)
+        }
     }
 
     /// 充电月份列表
@@ -680,15 +710,11 @@ final class TeslaAPI: ObservableObject {
     func loadChargeSummaryAll() async {
         chargeLoading = true
         defer { chargeLoading = false }
-        var req = URLRequest(url: url("/api/charge/summary?range=all"))
-        req.httpMethod = "GET"
-        req.timeoutInterval = 25
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
-            chargeSummary = try JSONDecoder().decode(ChargeSummaryResp.self, from: data)
+            chargeSummary = try await fetch("/api/charge/summary?range=all", timeout: 40)
+            chargeError = nil
         } catch {
-            actionText = "充电统计加载失败：\(error.localizedDescription)"
+            chargeError = friendly(error)
         }
     }
 
@@ -713,15 +739,11 @@ final class TeslaAPI: ObservableObject {
         defer { chargeLoading = false }
         var path = "/api/charge/summary?year=\(year)"
         if let month { path += "&month=\(month)" }
-        var req = URLRequest(url: url(path))
-        req.httpMethod = "GET"
-        req.timeoutInterval = 25
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else { return }
-            chargeSummary = try JSONDecoder().decode(ChargeSummaryResp.self, from: data)
+            chargeSummary = try await fetch(path)
+            chargeError = nil
         } catch {
-            actionText = "充电统计加载失败：\(error.localizedDescription)"
+            chargeError = friendly(error)
         }
     }
 

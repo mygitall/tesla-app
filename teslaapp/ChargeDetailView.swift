@@ -31,6 +31,15 @@ struct ChargeDetailView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
                     periodPicker
+                    if let e = api.chargeError ?? api.healthError {
+                        LoadErrorCard(message: e) {
+                            Task {
+                                await api.loadBatteryHealth()
+                                await api.loadChargeMonths()
+                                await reload()
+                            }
+                        }
+                    }
                     healthCard
                     heroCard
                     paramGrid

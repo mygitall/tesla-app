@@ -64,6 +64,8 @@ struct HomeView: View {
             if api.summary == nil { await api.refresh() }
             startAutoRefresh()
         }
+        .onAppear { if scenePhase == .active { startAutoRefresh() } }
+        .onDisappear { stopAutoRefresh() }
         .onChange(of: scenePhase) { phase in
             if phase == .active {
                 // 回到前台：复位在场判定 + 立刻刷一次 + 恢复定时刷新
@@ -147,11 +149,19 @@ struct HomeView: View {
                 Text("特斯拉 Model Y 标准续航版")
                     .font(.system(size: 11))
                     .foregroundColor(L.sub)
-                if let t = api.lastRefreshAt {
-                    Text("更新于 \(timeText(t))")
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 5, height: 5)
+                    Text(statusText)
                         .font(.system(size: 9.5))
-                        .foregroundColor(L.dim)
-                        .monospacedDigit()
+                        .foregroundColor(statusColor.opacity(0.95))
+                    if let t = api.lastRefreshAt {
+                        Text("· 更新于 \(timeText(t))")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(L.dim)
+                            .monospacedDigit()
+                    }
                 }
             }
             Spacer()
@@ -162,6 +172,41 @@ struct HomeView: View {
                     .frame(width: 34, height: 34)
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    /// 车辆在线状态 + 数据新鲜度（解决"看到旧数据却以为是实时"）
+    private var dataAgeMinutes: Int? {
+        guard let t = api.lastRefreshAt else { return nil }
+        return max(0, Int(Date().timeIntervalSince(t) / 60))
+    }
+
+    private var statusColor: Color {
+        if api.summary == nil { return L.dim }
+        let state = (api.summary?.state ?? "").lowercased()
+        if state == "offline" { return L.red }
+        guard let age = dataAgeMinutes else { return L.dim }
+        if age >= 30 { return L.orange }      // 数据太旧
+        if state == "asleep" { return L.sub }  // 车在休眠
+        return L.ringGreen
+    }
+
+    private var statusText: String {
+        if api.summary == nil { return "加载中" }
+        let state = (api.summary?.state ?? "").lowercased()
+        if state == "offline" { return "车辆离线" }
+        guard let age = dataAgeMinutes else { return stateLabel(state) }
+        if age >= 30 { return "\(stateLabel(state)) · 数据 \(age) 分钟前" }
+        if age >= 2 { return "\(stateLabel(state)) · \(age) 分钟前" }
+        return stateLabel(state)
+    }
+
+    private func stateLabel(_ state: String) -> String {
+        switch state {
+        case "online": return "在线"
+        case "asleep": return "休眠"
+        case "offline": return "离线"
+        default: return "未知"
         }
     }
 
