@@ -146,10 +146,10 @@ struct ChargeDetailView: View {
                 Image(systemName: "calendar").font(.system(size: 12)).foregroundColor(L.orange)
                 Text("充电统计").font(.system(size: 13, weight: .semibold)).foregroundColor(L.text)
                 Spacer()
-                if api.chargeLoading {
-                    ProgressView().scaleEffect(0.6)
-                }
+                // 原来这里有个加载菊花（ProgressView）：出现/消失会改变行高，
+                // 导致整页上下抖动，已去掉；加载状态改用不改变布局的方式表达。
             }
+            .frame(height: 20)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -168,6 +168,8 @@ struct ChargeDetailView: View {
                     }
                 }
                 .padding(.vertical, 2)
+                .opacity(api.chargeLoading ? 0.5 : 1)
+                .animation(.easeOut(duration: 0.15), value: api.chargeLoading)
             }
 
             // 固定高度：这行文字出现/消失会让上方卡片变高变矮，
