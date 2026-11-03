@@ -132,6 +132,14 @@ struct ActionRecord: Codable, Identifiable {
     var source: String?
 }
 
+struct AskResp: Codable {
+    var ok: Bool?
+    var intent: String?
+    var matched: Bool?
+    var answer: String?
+    var suggestions: [String]?
+}
+
 struct LastChargeResp: Codable {
     var ok: Bool?
     var kwh: Double?
@@ -1011,6 +1019,18 @@ final class TeslaAPI: ObservableObject {
         lastLon = lo
         lastLocTs = r.ts
         lastLocFrame = r.frame
+    }
+
+    /// 自然语言问答
+    func ask(_ question: String) async throws -> AskResp {
+        var req = URLRequest(url: url("/api/ask"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 25
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["q": question])
+        let (data, resp) = try await session.data(for: req)
+        if let http = resp as? HTTPURLResponse, http.statusCode == 401 { loggedIn = false }
+        return try JSONDecoder().decode(AskResp.self, from: data)
     }
 
     /// 拉取上一次充电摘要

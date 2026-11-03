@@ -16,6 +16,7 @@ struct HomeView: View {
     /// 无钥匙启动二次确认
     @State private var confirmDrive = false
     @State private var showMoreActions = false
+    @State private var showAsk = false
     /// 离车上锁开关的乐观状态
     @State private var pendingAutoLock: Bool?
     /// 定位失败提示
@@ -131,6 +132,7 @@ struct HomeView: View {
             if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true, kind: .refresh) }
         }
         .sheet(isPresented: $showMoreActions) { moreActionsSheet }
+        .sheet(isPresented: $showAsk) { AskView(api: api) }
         .confirmationDialog("无钥匙启动", isPresented: $confirmDrive, titleVisibility: .visible) {
             Button("确认启动（2 分钟内可驾驶）", role: .destructive) {
                 Haptics.tap()
@@ -266,6 +268,17 @@ struct HomeView: View {
                 }
             }
             Spacer()
+            Button {
+                Haptics.tap()
+                showAsk = true
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.app(18, .light))
+                    .foregroundColor(L.sand.opacity(0.9))
+                    .frame(width: 34, height: 34)
+            }
+            .buttonStyle(.plain)
+
             Button { showSettings = true } label: {
                 Image(systemName: "gearshape")
                     .font(.app(20, .light))
