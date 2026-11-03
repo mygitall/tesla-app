@@ -43,6 +43,7 @@ import Combine
 struct TodayStats: Codable {
     var distanceKm: Double?
     var driveMinutes: Int?
+    var durationKnown: Bool?      // 时长是否有真实数据（没行程时可能为 false）
     var energyKwh: Double?
     var energyEstimated: Bool?    // 能耗是否为估算值
     var cost: Double?

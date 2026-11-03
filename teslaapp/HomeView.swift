@@ -488,7 +488,7 @@ struct HomeView: View {
         NavigationLink(destination: TripsListView(api: api)) {
             TodayTripCard(
                 distanceKm: s?.today?.distanceKm ?? 0,
-                durationText: durText(s?.today?.driveMinutes),
+                durationText: durText(s?.today?.driveMinutes, known: s?.today?.durationKnown),
                 energyKwh: s?.today?.energyKwh ?? 0,
                 energyEstimated: s?.today?.energyEstimated ?? false
             )
@@ -759,12 +759,26 @@ struct HomeView: View {
                         .font(.app(10, .semibold))
                         .foregroundColor(L.dim)
                 }
-                HStack(spacing: 0) {
-                    metric((s?.chargerPower ?? 0) > 0 ? String(format: "%.1f", s!.chargerPower!) : "—", "功率 kW")
-                    vDivider
-                    metric((s?.chargerVoltage ?? 0) > 50 ? "\(Int(s!.chargerVoltage!))" : "—", "电压 V")
-                    vDivider
-                    metric((s?.chargerCurrent ?? 0) > 0 ? "\(Int(s!.chargerCurrent!))" : "—", "电流 A")
+                let isChargingNow = (s?.charging ?? "").lowercased().contains("charging")
+                let hasPower = (s?.chargerPower ?? 0) > 0
+                if isChargingNow || hasPower {
+                    // 充电中：功率 / 电压 / 电流（电压异常值不显示）
+                    HStack(spacing: 0) {
+                        metric(hasPower ? String(format: "%.1f", s!.chargerPower!) : "—", "功率 kW")
+                        vDivider
+                        metric((s?.chargerVoltage ?? 0) > 100 ? "\(Int(s!.chargerVoltage!))" : "—", "电压 V")
+                        vDivider
+                        metric((s?.chargerCurrent ?? 0) > 0 ? "\(Int(s!.chargerCurrent!))" : "—", "电流 A")
+                    }
+                } else {
+                    // 未充电：显示上限 / 上次充入 / 剩余续航，比一排「—」有用
+                    HStack(spacing: 0) {
+                        metric(s?.chargeLimit.map { "\($0)%" } ?? "—", "充电上限")
+                        vDivider
+                        metric((s?.energyAddedKwh ?? 0) > 0 ? String(format: "%.0f", s!.energyAddedKwh!) : "—", "上次充入 kWh")
+                        vDivider
+                        metric("\(s?.battery ?? 0)%", "当前电量")
+                    }
                 }
 
                 // 状态行：充电口 / 空调设定温度 / 预计充满
@@ -876,8 +890,10 @@ struct HomeView: View {
         return f.string(from: d)
     }
 
-    private func durText(_ minutes: Int?) -> String {
-        let m = minutes ?? 0
+    /// 时长文案：没真实数据时显示「—」，不再假装 0:00
+    private func durText(_ minutes: Int?, known: Bool?) -> String {
+        guard let m = minutes, (known ?? (m > 0)) else { return "—" }
+        if m <= 0 { return "—" }
         return String(format: "%d:%02d", m / 60, m % 60)
     }
 
