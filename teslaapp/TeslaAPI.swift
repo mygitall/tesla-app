@@ -857,13 +857,13 @@ final class TeslaAPI: ObservableObject {
         chargeLoading = true
         defer { chargeLoading = false }
         do {
-            chargeSummary = try await fetch("/api/charge/summary?range=all", timeout: 40, cacheKey: "charge-summary")
+            chargeSummary = try await fetch("/api/charge/summary?range=all", timeout: 40, cacheKey: "charge-summary-all")
             chargeError = nil
         } catch {
-            if let d = loadDiskCache("charge-summary"),
+            if let d = loadDiskCache("charge-summary-all"),
                let sum = try? JSONDecoder().decode(ChargeSummaryResp.self, from: d) {
                 chargeSummary = sum
-                chargeError = "离线 · 显示 \(cacheAge("charge-summary") ?? "缓存")的数据"
+                chargeError = "离线 · 显示 \(cacheAge("charge-summary-all") ?? "缓存")的数据"
             } else {
                 chargeError = friendly(error)
             }
@@ -892,10 +892,18 @@ final class TeslaAPI: ObservableObject {
         var path = "/api/charge/summary?year=\(year)"
         if let month { path += "&month=\(month)" }
         do {
-            chargeSummary = try await fetch(path, cacheKey: month == nil ? "charge-summary" : nil)
+            let key = "charge-summary-\(year)-\(month ?? 0)"
+            chargeSummary = try await fetch(path, cacheKey: key)
             chargeError = nil
         } catch {
-            chargeError = friendly(error)
+            let key = "charge-summary-\(year)-\(month ?? 0)"
+            if let d = loadDiskCache(key),
+               let sum = try? JSONDecoder().decode(ChargeSummaryResp.self, from: d) {
+                chargeSummary = sum
+                chargeError = "离线 · 显示 \(cacheAge(key) ?? "缓存")的数据"
+            } else {
+                chargeError = friendly(error)
+            }
         }
     }
 

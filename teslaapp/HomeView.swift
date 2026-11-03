@@ -57,6 +57,7 @@ struct HomeView: View {
                     .padding(.top, 80)
                     // 首屏骨架屏：首次加载还没完成时，用占位块代替一堆 0 和 --
                     .redacted(reason: skeletonMode ? .placeholder : [])
+                    .allowsHitTesting(!skeletonMode)   // 数据没到前不允许点按钮发命令
                     .opacity(skeletonMode ? 0.55 : 1)
                     .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
                                value: skeletonMode)
@@ -83,7 +84,6 @@ struct HomeView: View {
             } else {
                 ble.goBackground()
                 stopAutoRefresh()
-                CrashLogger.markCleanExit()
             }
         }
         .onChange(of: ble.connected) { on in
@@ -101,13 +101,13 @@ struct HomeView: View {
         }
         .onChange(of: api.busy) { busy in
             if busy {
-                showToast(api.actionText ?? "执行中…", loading: true)
+                showToast(api.actionText ?? "执行中…", loading: true, kind: .command)
             } else if let t = api.actionText, !t.isEmpty {
-                showToast(t, error: api.actionIsError)
+                showToast(t, error: api.actionIsError, kind: .command)
             }
         }
         .onChange(of: api.errorText) { err in
-            if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true) }
+            if let e = err, !e.isEmpty, !api.busy { showToast(e, error: true, kind: .refresh) }
         }
         .confirmationDialog("无钥匙启动", isPresented: $confirmDrive, titleVisibility: .visible) {
             Button("确认启动（2 分钟内可驾驶）", role: .destructive) {
@@ -630,7 +630,7 @@ struct HomeView: View {
                         .foregroundColor(L.text)
                         .lineLimit(2)
                     Spacer(minLength: 0)
-                    if t.isError, api.lastFailedCommand != nil {
+                    if t.isError, t.kind == .command, api.lastFailedCommand != nil {
                         Button {
                             Haptics.tap()
                             toast = nil
@@ -665,12 +665,15 @@ struct HomeView: View {
         }
     }
 
-    private func showToast(_ text: String, error: Bool = false, loading: Bool = false) {
+    private func showToast(_ text: String, error: Bool = false, loading: Bool = false,
+                           kind: ToastInfo.Kind = .info) {
         withAnimation(.easeOut(duration: 0.18)) {
-            toast = ToastInfo(text: text, isError: error, loading: loading)
+            toast = ToastInfo(text: text, isError: error, loading: loading, kind: kind)
         }
         guard !loading else { return }
-        let delay: Double = error ? (api.lastFailedCommand != nil ? 9.0 : 5.0) : 2.2
+        // 只有「命令失败」才给重试机会
+        let retryable = error && kind == .command && api.lastFailedCommand != nil
+        let delay: Double = error ? (retryable ? 9.0 : 5.0) : 2.2
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             if toast?.text == text {
                 withAnimation(.easeOut(duration: 0.2)) { toast = nil }
@@ -763,7 +766,9 @@ extension String: Identifiable {
 
 
 struct ToastInfo: Equatable {
+    enum Kind { case info, command, refresh }
     var text: String
     var isError: Bool
     var loading: Bool
+    var kind: Kind = .info
 }

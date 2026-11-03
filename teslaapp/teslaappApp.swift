@@ -10,10 +10,16 @@ struct teslaappApp: App {
         }
     }
 
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark)
+        }
+        .onChange(of: scenePhase) { phase in
+            // 任意页面切到后台都算干净退出，避免下次启动误报"异常退出"
+            if phase != .active { CrashLogger.markCleanExit() }
         }
     }
 }
