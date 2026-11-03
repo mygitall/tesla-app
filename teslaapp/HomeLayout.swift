@@ -48,7 +48,11 @@ final class HomeLayout: ObservableObject {
         for c in Card.allCases.map(\.rawValue) where !merged.contains(c) { merged.append(c) }
         order = merged
         collapsed = Set(UserDefaults.standard.stringArray(forKey: collapsedKey) ?? [])
+
         hidden = Set(UserDefaults.standard.stringArray(forKey: hiddenKey) ?? [])
+        if ProcessInfo.processInfo.environment["DEMO_LAYOUT"] == "1" {
+            collapsed = ["today"]; hidden = ["phoneKey"]
+        }
     }
 
     func move(_ id: String, by delta: Int) {
