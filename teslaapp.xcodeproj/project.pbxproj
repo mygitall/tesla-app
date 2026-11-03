@@ -28,7 +28,6 @@
 		BB4A29DB2036959F0774B4830792A7AC /* TodayStatTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EA03FAD1A7B36FA2E908E11121CFCA /* TodayStatTile.swift */; };
 		D88A8FF34C33F30CEABF8B0E50259B5B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D40D398972DC7FB861943DCAE19A565A /* Preview Assets.xcassets */; };
 		D9FB1D1D65567CE523D1FAC62071F360 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986215ACBFFE505122036F4E3D8E74F5 /* SettingsSheet.swift */; };
-		DA169CE65E223BB9C9CBDD35DFF8107B /* AutoEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */; };
 		EE673D39FC545CAF778E65394BBDCBA1 /* PowerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */; };
 		F46D8971D47409F7AAC3013F41825715 /* TodayTripCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D917F9E396A51925B949347ABD600A9F /* TodayTripCard.swift */; };
 /* End PBXBuildFile section */
@@ -36,7 +35,6 @@
 /* Begin PBXFileReference section */
 		0B90B0A42ED031477861199BEDD8C9A4 /* teslaapp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = teslaapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeCurveView.swift; sourceTree = "<group>"; };
-		2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoEntry.swift; sourceTree = "<group>"; };
 		2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */ = {isa = PBXFileReference; path = "phone-key.pem"; sourceTree = "<group>"; };
 		2DB939865EDF2ED93F518D75B9EB019F /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaKey.swift; sourceTree = "<group>"; };
@@ -79,7 +77,6 @@
 			children = (
 				C640E15664DD062AEEB97E5B09B2EFA0 /* AppConfig.swift */,
 				BCFDC842B0626A842C2CD3F9E444DEAA /* Assets.xcassets */,
-				2102D558607943704866B46D33D46FC0 /* AutoEntry.swift */,
 				7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */,
 				126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */,
 				68241A65BBD19D3549680C5B622460C0 /* ChargeDetailView.swift */,
@@ -206,7 +203,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3F16DE1EB2E2CAFCA1F7DA52358B4B5D /* AppConfig.swift in Sources */,
-				DA169CE65E223BB9C9CBDD35DFF8107B /* AutoEntry.swift in Sources */,
 				4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */,
 				69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */,
 				16EE9E4589448768DCBA84EAAFAE4413 /* ChargeDetailView.swift in Sources */,

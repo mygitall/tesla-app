@@ -1,4 +1,41 @@
 import Foundation
+import Security
+
+/// 轻量 Keychain 封装：用于存访问密钥（比 UserDefaults 安全）
+enum KeychainStore {
+    private static let service = "com.zhangweiwei.teslaapp"
+
+    private static func baseQuery(_ key: String) -> [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: key]
+    }
+
+    static func set(_ value: String, for key: String) {
+        let q = baseQuery(key)
+        SecItemDelete(q as CFDictionary)
+        guard !value.isEmpty, let data = value.data(using: .utf8) else { return }
+        var add = q
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        SecItemAdd(add as CFDictionary, nil)
+    }
+
+    static func get(_ key: String) -> String? {
+        var q = baseQuery(key)
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data,
+              let str = String(data: data, encoding: .utf8) else { return nil }
+        return str
+    }
+
+    static func delete(_ key: String) {
+        SecItemDelete(baseQuery(key) as CFDictionary)
+    }
+}
 import Combine
 
 // MARK: - 数据模型
@@ -355,14 +392,26 @@ final class TeslaAPI: ObservableObject {
     /// 免密密钥（/k/<key>），存在本地；首次运行自动写入内置密钥
     var accessKey: String {
         get {
-            let v = UserDefaults.standard.string(forKey: "accessKey") ?? ""
-            if v.isEmpty {
-                UserDefaults.standard.set(AppConfig.accessKey, forKey: "accessKey")
+            // 1) 优先读 Keychain
+            if let v = KeychainStore.get("accessKey"), !v.isEmpty { return v }
+            // 2) 迁移：老版本存在 UserDefaults 的明文密钥
+            let legacy = UserDefaults.standard.string(forKey: "accessKey") ?? ""
+            if !legacy.isEmpty {
+                KeychainStore.set(legacy, for: "accessKey")
+                UserDefaults.standard.removeObject(forKey: "accessKey")
+                return legacy
+            }
+            // 3) 首次运行写入内置密钥
+            if !AppConfig.accessKey.isEmpty {
+                KeychainStore.set(AppConfig.accessKey, for: "accessKey")
                 return AppConfig.accessKey
             }
-            return v
+            return ""
         }
-        set { UserDefaults.standard.set(newValue, forKey: "accessKey") }
+        set {
+            if newValue.isEmpty { KeychainStore.delete("accessKey") }
+            else { KeychainStore.set(newValue, for: "accessKey") }
+        }
     }
 
     /// 从「纯密钥」或「完整链接」里解析出密钥
