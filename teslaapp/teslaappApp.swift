@@ -7,6 +7,7 @@ struct teslaappApp: App {
         DispatchQueue.main.async {
             TypoScale.start()
             CrashLogger.start()
+            Notify.requestPermission()
         }
     }
 

@@ -21,6 +21,41 @@ struct TripsView: View {
 struct TripsListView: View {
     @ObservedObject var api: TeslaAPI
 
+    @State private var query = ""
+    @State private var showShare = false
+    @State private var exportURL: URL?
+
+    /// 搜索过滤：按日期、里程、速度匹配
+    private var shownTrips: [Trip] {
+        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return api.trips }
+        let q = query.lowercased()
+        let f = DateFormatter(); f.dateFormat = "MM-dd HH:mm"
+        let g = DateFormatter(); g.dateFormat = "M月d日"
+        return api.trips.filter { t in
+            let d = Date(timeIntervalSince1970: TimeInterval(t.startTs))
+            return f.string(from: d).lowercased().contains(q)
+                || g.string(from: d).lowercased().contains(q)
+                || String(format: "%.1f", t.distanceKm).contains(q)
+                || "\(t.distanceKm)".contains(q)
+        }
+    }
+
+    /// 导出当前（过滤后的）行程为 CSV
+    private func exportCSV() {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"
+        var csv = "开始时间,结束时间,距离km,时长分钟,起始电量,结束电量,最高速km/h,平均速km/h\n"
+        for t in shownTrips {
+            let s0 = f.string(from: Date(timeIntervalSince1970: TimeInterval(t.startTs)))
+            let s1 = f.string(from: Date(timeIntervalSince1970: TimeInterval(t.endTs)))
+            csv += "\(s0),\(s1),\(t.distanceKm),\(t.durationMin),\(t.startBattery ?? 0),\(t.endBattery ?? 0),\(t.maxSpeedKmh ?? 0),\(t.avgSpeedKmh ?? 0)\n"
+        }
+        let name = "行程-\(DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)).csv"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        try? csv.data(using: .utf8)?.write(to: url)
+        exportURL = url
+        showShare = true
+    }
+
     var body: some View {
         ZStack {
             L.bg.ignoresSafeArea()
@@ -33,10 +68,12 @@ struct TripsListView: View {
                         }
                         .padding(.horizontal, 16)
                     }
-                    if api.trips.isEmpty {
+                    if shownTrips.isEmpty && !query.isEmpty {
+                        Text("没有匹配的行程").font(.app(13)).foregroundColor(L.dim)
+                    } else if api.trips.isEmpty {
                         emptyCard
                     } else {
-                        ForEach(api.trips) { t in
+                        ForEach(shownTrips) { t in
                             NavigationLink(destination: TripDetailView(trip: t, api: api)) {
                                 TripRow(trip: t)
                             }
@@ -70,6 +107,21 @@ struct TripsListView: View {
         }
         .navigationTitle("行程")
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索日期或里程")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Haptics.tap()
+                    exportCSV()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .disabled(shownTrips.isEmpty)
+            }
+        }
+        .sheet(isPresented: $showShare) {
+            if let u = exportURL { ShareSheet(items: [u]) }
+        }
         .refreshable { await api.loadTrips() }
         .task {
             if api.trips.isEmpty { await api.loadTrips() }

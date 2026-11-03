@@ -6,7 +6,7 @@ final class HomeLayout: ObservableObject {
     static let shared = HomeLayout()
 
     enum Card: String, CaseIterable, Identifiable {
-        case car, battery, today, actions, charging, phoneKey
+        case car, battery, today, actions, charging, phoneKey, location
         var id: String { rawValue }
 
         var title: String {
@@ -17,6 +17,7 @@ final class HomeLayout: ObservableObject {
             case .actions:  return "快捷操作"
             case .charging: return "充电状态"
             case .phoneKey: return "手机钥匙"
+            case .location: return "车在哪"
             }
         }
 
@@ -28,6 +29,7 @@ final class HomeLayout: ObservableObject {
             case .actions:  return "bolt.fill"
             case .charging: return "bolt.car.fill"
             case .phoneKey: return "key.fill"
+            case .location: return "map.fill"
             }
         }
     }

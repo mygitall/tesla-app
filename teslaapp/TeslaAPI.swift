@@ -131,6 +131,13 @@ struct ActionRecord: Codable, Identifiable {
     var source: String?
 }
 
+struct LastLocResp: Codable {
+    var ok: Bool?
+    var lat: Double?
+    var lon: Double?
+    var ts: Int?
+}
+
 struct ActionsResp: Codable {
     var ok: Bool?
     var actions: [ActionRecord]
@@ -345,6 +352,10 @@ final class TeslaAPI: ObservableObject {
     @Published var tripsHasMore = false
     /// 电价（元/度），来自服务器设置
     @Published var electricityPrice: Double?
+    /// 最后已知位置（车辆休眠时 summary 里没有坐标）
+    @Published var lastLat: Double?
+    @Published var lastLon: Double?
+    @Published var lastLocTs: Int?
     /// 操作历史
     @Published var actions: [ActionRecord] = []
     @Published var actionsError: String?
@@ -705,6 +716,9 @@ final class TeslaAPI: ObservableObject {
 
         do {
             let s: VehicleSummary = try await get("/api/app/summary", timeout: 55)
+            // 充电完成检测（比较上一次与这一次的充电状态）
+            Notify.chargingFinishedIfNeeded(prev: summary?.charging, now: s.charging,
+                                            battery: s.battery, limit: s.chargeLimit)
             summary = s
             lastRefreshAt = Date()
             consecutiveRefreshFailures = 0
@@ -971,6 +985,15 @@ final class TeslaAPI: ObservableObject {
                 chargeError = friendly(error)
             }
         }
+    }
+
+    /// 拉取最后已知位置（summary 没有坐标时用）
+    func loadLastLocation() async {
+        guard let r: LastLocResp = try? await fetch("/api/location/last", timeout: 15) else { return }
+        guard r.ok == true, let la = r.lat, let lo = r.lon else { return }
+        lastLat = la
+        lastLon = lo
+        lastLocTs = r.ts
     }
 
     /// 操作历史（谁在何时锁车/开空调）

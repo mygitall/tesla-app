@@ -89,6 +89,7 @@ struct HomeView: View {
         .refreshable { await api.refresh() }
         .task {
             ble.start()
+            await api.loadLastLocation()
             if api.summary == nil { await api.refresh() }
             startAutoRefresh()
         }
@@ -201,6 +202,7 @@ struct HomeView: View {
         case .actions:  actionRow
         case .charging: chargingCard
         case .phoneKey: phoneKeyCard
+        case .location: locationCard
         case nil:       EmptyView()
         }
     }
@@ -407,6 +409,22 @@ struct HomeView: View {
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(Capsule().fill(active ? L.sand.opacity(0.12) : L.card2))
+    }
+
+    private var locationCard: some View {
+        // 优先实时坐标；没有就用最后一次记录的位置（并提示时间）
+        let lat = s?.lat ?? api.lastLat
+        let lon = s?.lon ?? api.lastLon
+        let isStale = (s?.lat == nil)
+        return LocationCard(lat: lat, lon: lon,
+                            staleText: isStale ? staleLocationText : nil) { openCarInMaps() }
+    }
+
+    private var staleLocationText: String? {
+        guard let ts = api.lastLocTs else { return "车辆休眠中，显示最后记录的位置" }
+        let mins = max(0, Int(Date().timeIntervalSince1970 - Double(ts)) / 60)
+        let rel = mins < 60 ? "\(mins) 分钟前" : (mins < 1440 ? "\(mins / 60) 小时前" : "\(mins / 1440) 天前")
+        return "最后位置 · \(rel)（车休眠中）"
     }
 
     private func metricTile(icon: String, title: String, value: String) -> some View {

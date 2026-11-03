@@ -14,10 +14,12 @@
 		3E416D3BBB6EB15087BAC1E9F431FE89 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */; };
 		3F16DE1EB2E2CAFCA1F7DA52358B4B5D /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C640E15664DD062AEEB97E5B09B2EFA0 /* AppConfig.swift */; };
 		40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */; };
+		41E07D07BBF605C9BD749BAB422DD66E /* LocationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 506D0352495C01310C3D2FD0B949619A /* LocationCard.swift */; };
 		4F3D0058CC6175530F38AFCEDA7AA874 /* TripsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD4A723E94A50C1FE3ED2F338940E80 /* TripsView.swift */; };
 		4F4A39A709415A16F644C2790A0D5E8F /* BLEConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF99D1ABFA3E7AF426283451EF4DE4C /* BLEConfig.swift */; };
 		5418C7470E8760CDE458FE72131778CA /* HomeLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596A752C914BDD4BAA6D8469CA589209 /* HomeLayout.swift */; };
 		69F9421FFD1154D479F65598053A1693 /* ChargeCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BAD82E1108B06245B65FEE21EBBF8 /* ChargeCurveView.swift */; };
+		70667AD8428D4DF6961DADF875E1112C /* Notify.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5125408E6897E6AD88B54C6F1B8D7E2C /* Notify.swift */; };
 		77C064DA5C685191817AE33DF6B857A3 /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2196F5206D306446AD5B5052879E816 /* CrashLogger.swift */; };
 		7FD866AF7F79D1E411500F7E9EB5A87D /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272E6B8F2AB879A6CC67D5D87D3E9C5 /* Haptics.swift */; };
 		A72866047347672E1E12F189B431CDB6 /* teslaappApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF828282C6FC64F66C139AEF5168BBD /* teslaappApp.swift */; };
@@ -42,6 +44,8 @@
 		3582B427E78988E3182E2BF43EFBFF6D /* TeslaKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaKey.swift; sourceTree = "<group>"; };
 		418CBC49A775E66482C713DAFA826737 /* TeslaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaAPI.swift; sourceTree = "<group>"; };
 		483D7D0F1A0585AD45F2E01245C01A41 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		506D0352495C01310C3D2FD0B949619A /* LocationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationCard.swift; sourceTree = "<group>"; };
+		5125408E6897E6AD88B54C6F1B8D7E2C /* Notify.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notify.swift; sourceTree = "<group>"; };
 		53E22F8492B612726059C9E878784B2D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		572E95C9DA2EB6958FE6152D1BAD5058 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		596A752C914BDD4BAA6D8469CA589209 /* HomeLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeLayout.swift; sourceTree = "<group>"; };
@@ -92,7 +96,9 @@
 				53E22F8492B612726059C9E878784B2D /* HomeView.swift */,
 				C9D3D4D0B459E1539B7FFC83C4D17E7A /* Info.plist */,
 				A69C4115FF77BC36A2D709E1FF24DE6A /* LightTheme.swift */,
+				506D0352495C01310C3D2FD0B949619A /* LocationCard.swift */,
 				2DB939865EDF2ED93F518D75B9EB019F /* LoginView.swift */,
+				5125408E6897E6AD88B54C6F1B8D7E2C /* Notify.swift */,
 				2C0A3F3E9E09041E8A65E60DED87FCB3 /* phone-key.pem */,
 				6528C474914ACECD035D80F31A6ABA5F /* PowerCard.swift */,
 				986215ACBFFE505122036F4E3D8E74F5 /* SettingsSheet.swift */,
@@ -219,7 +225,9 @@
 				5418C7470E8760CDE458FE72131778CA /* HomeLayout.swift in Sources */,
 				B7385AC6CBDEAD91C779814F9C0724D6 /* HomeView.swift in Sources */,
 				40916B3834844EB9336546D1B9B6364A /* LightTheme.swift in Sources */,
+				41E07D07BBF605C9BD749BAB422DD66E /* LocationCard.swift in Sources */,
 				B2F0334CF48D5A945C25AC0BACB9C0DD /* LoginView.swift in Sources */,
+				70667AD8428D4DF6961DADF875E1112C /* Notify.swift in Sources */,
 				EE673D39FC545CAF778E65394BBDCBA1 /* PowerCard.swift in Sources */,
 				D9FB1D1D65567CE523D1FAC62071F360 /* SettingsSheet.swift in Sources */,
 				B1B555390BE02FBA3783AC10D75A2B89 /* TeslaAPI.swift in Sources */,
